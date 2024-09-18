@@ -1,0 +1,10 @@
+#wordgene {
+    .row.result-area .output {
+        flex: 1 1 auto;
+
+        .character {
+            flex: 0 0 25%;
+        }
+
+    }
+}

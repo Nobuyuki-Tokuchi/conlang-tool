@@ -1,0 +1,98 @@
+#root {
+    --default-gap: 4px;
+    height: calc(100vh - 16px);
+    display: flex;
+    column-gap: calc(var(--default-gap) * 2);
+}
+
+menu.tab-menu {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    padding: 0 var(--default-gap) 0 0;
+    margin: 0;
+    row-gap: calc(var(--default-gap) * 2);
+    border-right: 1px black solid;
+    
+    > li > button {
+        width: 100%;
+    }
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 8px);
+    row-gap: 8px;
+    flex: 1 1;
+}
+
+.row {
+    display: flex;
+    column-gap: 8px;
+
+    > .half {
+        flex-basis: 50%;
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+
+    &.row-wrap {
+        flex-wrap: wrap;
+    }
+
+    > .input-line {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+}
+
+#root > .stretch,
+.main > .stretch,
+.row > .stretch {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+}
+
+.has-original {
+    font-weight: bold;
+}
+
+.duplication {
+    text-decoration: line-through;
+    background-color: lightcyan;
+}
+
+.invalid {
+    color: #fff;
+    background-color: #008;
+}
+
+.result-area {
+    height: 100%;
+    overflow-y: hidden;
+
+    .text {
+      resize: none;
+      flex-basis: 50%;
+    }
+    
+    .input {
+      margin: 0;
+      padding: 0;
+      border: 1px solid black;
+    }
+    
+    .output {
+      overflow-y: scroll;
+      border: 1px solid black;
+    }
+}
