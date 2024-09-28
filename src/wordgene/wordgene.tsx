@@ -211,7 +211,7 @@ function hybridizeGene(wordGeneData: WordGeneData[], affix: AffixGeneData[],  wo
     return {
         word: result.map(x => x.map(y => {
             const c = wordGeneData.find(z => z.gene === y)!.character;
-            return c === "" ? " " : c;
+            return c === "" ? "_" : c;
         }).join("")).join(", "),
         gene: result.map(x => x.join(" ")).join(", "),
         message: mutationMessage.length > 0 ? mutationMessage.join(",") : undefined,
