@@ -37,7 +37,7 @@ export type Props = {
 };
 
 const MUTATION_VALUE = 2 ** (-7);
-const GENE_VALUES = ["0","1","2","3"];
+const GENE_VALUES = ["0","1","2","3"] as const;
 
 export function createData(): Data<Props> & Methods<Props> {
     return {
@@ -372,30 +372,31 @@ function mutatedGene(gene: string[], partMutation: boolean = false): [string[], 
         newValue[1].push("reverse gene part");
     }
 
-    if (newValue.length >= 2 && isSuccess(MUTATION_VALUE / 4)) {
+    if (newValue[0].length >= 2 && isSuccess(MUTATION_VALUE / 4)) {
         // 位置交換
-        const index = getRandomIndex(newValue.length);
+        const partGene = newValue[0];
+        const index = getRandomIndex(partGene.length);
 
         if (index === 0) {
-            const tmp = newValue[0];
-            newValue[0] = newValue[1];
-            newValue[1] = tmp;
+            const tmp = partGene[0];
+            partGene[0] = partGene[1];
+            partGene[1] = tmp;
         }
-        else if (index === newValue.length - 1) {
-            const tmp = newValue[index];
-            newValue[index] = newValue[index - 1];
-            newValue[index - 1] = tmp;
+        else if (index === partGene.length - 1) {
+            const tmp = partGene[index];
+            partGene[index] = partGene[index - 1];
+            partGene[index - 1] = tmp;
         }
         else {
             if (doCointoss()) {
-                const tmp = newValue[index];
-                newValue[index] = newValue[index - 1];
-                newValue[index - 1] = tmp;
+                const tmp = partGene[index];
+                partGene[index] = partGene[index - 1];
+                partGene[index - 1] = tmp;
             }
             else {
-                const tmp = newValue[index];
-                newValue[index] = newValue[index + 1];
-                newValue[index + 1] = tmp;
+                const tmp = partGene[index];
+                partGene[index] = partGene[index + 1];
+                partGene[index + 1] = tmp;
             }
         }
 
