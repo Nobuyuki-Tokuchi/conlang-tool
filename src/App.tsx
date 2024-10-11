@@ -4,21 +4,25 @@ import { Dynamic } from 'solid-js/web';
 
 import Flexible from './flexible/flexible';
 import * as flexible from './flexible/flexible';
-import PZatlin from './pzatlin/pzatlin';
-import * as pzatlin from './pzatlin/pzatlin';
 import WordGene from './wordgene/wordgene';
 import * as wordgene from './wordgene/wordgene';
+import PZatlin from './pzatlin/pzatlin';
+import * as pzatlin from './pzatlin/pzatlin';
+import Hah from './hahcompress/hah';
+import * as hah from './hahcompress/hah';
 
 function App() {
     const [selectedTab, setSelectedTab] = createSignal(0);
     const flexData = flexible.createData();
-    const zatlinData = pzatlin.createData();
     const wordgeneData = wordgene.createData();
+    const zatlinData = pzatlin.createData();
+    const hahData = hah.createData();
 
     const menulist: [string,() => JSX.Element][] = [
         ["flexible", () => <Flexible {...flexData.getters} update={(key, value) => flexData.update(key, value)} />],
         ["wordgene", () => <WordGene {...wordgeneData.getters} update={(key, value) => wordgeneData.update(key, value)} />],
         ["zatlin", () => <PZatlin {...zatlinData.getters} update={(key, value) => zatlinData.update(key, value)} />],
+        ["hah", () => <Hah {...hahData.getters} update={(key, value) => hahData.update(key, value)} />],
     ];
 
     return (
