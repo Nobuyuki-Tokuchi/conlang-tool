@@ -57,7 +57,7 @@ export function createData(): Data<Props> & Methods<Props> {
 
         input: createSignal<string[]>([]),
         output: createSignal<CreatedWord[]>([]),
-
+        
         update(key, value) {
             (this as Data<Props>)[key][1](value);
         },
@@ -163,6 +163,8 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
         });
     }
 
+    let dictionariesRef: HTMLInputElement | undefined;
+
     const readDictionaries: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
         const files = event.target.files;
         if (files == null || !(files.length > 0)) { return; }
@@ -197,7 +199,8 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
                     </select>
                 </div>
                 <div class="row half align-center">
-                    <input type="file" multiple onchange={readDictionaries}/>
+                    <button onclick={() => dictionariesRef?.click()}>読込</button>
+                    <input type="file" multiple onchange={readDictionaries} style="display: none" ref={dictionariesRef}  />
                     <label class="text-nowrap">
                         <input type="checkbox" checked={props.isAppend} onchange={(event) => props.update("isAppend", event.target.checked)}/>
                         追記にする

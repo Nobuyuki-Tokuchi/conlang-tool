@@ -12,6 +12,8 @@ export type Props = {
     duplicationCount: number;
     input: string;
     output: CreatedWord[];
+
+    zatlinFileName: string;
 };
 
 export function createData(): Data<Props> & Methods<Props> {
@@ -21,6 +23,8 @@ export function createData(): Data<Props> & Methods<Props> {
 
         input: createSignal<string>(""),
         output: createSignal<CreatedWord[]>([]),
+
+        zatlinFileName: createSignal<string>(""),
 
         update(key, value) {
             (this as Data<Props>)[key][1](value);
@@ -33,12 +37,18 @@ export function createData(): Data<Props> & Methods<Props> {
 
                 input: this.input[0](),
                 output: this.output[0](),
+
+                zatlinFileName: this.zatlinFileName[0](),
             };
         },
     };
 }
 
 function PZatlin(props: Props & Pick<Methods<Props>, "update">) {
+    const displayZatlinFileName = () => {
+        return props.zatlinFileName != null && props.zatlinFileName !== "" ? props.zatlinFileName : "未選択"
+    };
+
     const duplicationCountPercent = () => (props.duplicationCount / props.generateCount * 100).toFixed(2);
 
     const generateWords: JSX.EventHandlerUnion<HTMLButtonElement, Event> = () => {
@@ -67,12 +77,18 @@ function PZatlin(props: Props & Pick<Methods<Props>, "update">) {
         });
     }
 
-    const readDictionaries: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
+    const readDictionary: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
         const files = event.target.files;
         if (files == null || !(files.length > 0)) { return; }
 
-        props.update("input", await files[0].text());
+        const text = await files[0].text();
+        batch(() => {
+            props.update("input", text);
+            props.update("zatlinFileName", files[0].name);
+        })
     };
+
+    let zatlinFileRef: HTMLInputElement | undefined;
 
     return (
         <div class="main">
@@ -81,7 +97,9 @@ function PZatlin(props: Props & Pick<Methods<Props>, "update">) {
                     <button class="text-nowrap" onclick={generateWords}>実行</button>
                 </div>
                 <div class="row half align-center">
-                    <input type="file" multiple onchange={readDictionaries}/>
+                    <button onclick={() => zatlinFileRef?.click()}>読込</button>
+                    <span class="text-nowrap file-name" title={displayZatlinFileName()}>{displayZatlinFileName()}</span>
+                    <input type="file" multiple onchange={readDictionary} style="display: none" ref={zatlinFileRef} />
                 </div>
             </div>
             <div class="row row-wrap align-center">

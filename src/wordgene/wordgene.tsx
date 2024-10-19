@@ -1,4 +1,4 @@
-import { For, JSX, createSignal } from "solid-js";
+import { For, JSX, batch, createSignal } from "solid-js";
 import { Data, Methods } from "../common/common";
 import "./wordgene.css";
 
@@ -34,6 +34,10 @@ export type Props = {
     affixSource: AffixGeneData[];
     words: Dictionary["words"];
     output: CreatedGene[];
+
+    geneFileName: string;
+    affixFileName: string;
+    dictionaryName: string;
 };
 
 const MUTATION_VALUE = 2 ** (-7);
@@ -47,6 +51,10 @@ export function createData(): Data<Props> & Methods<Props> {
         words: createSignal<Dictionary["words"]>([]),
         output: createSignal<CreatedGene[]>([]),
 
+        geneFileName: createSignal<string>(""),
+        affixFileName: createSignal<string>(""),
+        dictionaryName: createSignal<string>(""),
+
         update(key, value) {
             (this as Data<Props>)[key][1](value);
         },
@@ -58,34 +66,61 @@ export function createData(): Data<Props> & Methods<Props> {
                 affixSource: this.affixSource[0](),
                 words: this.words[0](),
                 output: this.output[0](),
+
+                geneFileName: this.geneFileName[0](),
+                affixFileName: this.affixFileName[0](),
+                dictionaryName: this.dictionaryName[0](),
             };
         },
     };
 }
 
 function WordGene(props: Props & Pick<Methods<Props>, "update">) {
+    const displayGeneFilneName = () => {
+        return props.geneFileName != null && props.geneFileName !== "" ? props.geneFileName : "未選択"
+    };
+
+    const displayAffixFileName = () => {
+        return props.affixFileName != null && props.affixFileName !== "" ? props.affixFileName : "未選択"
+    };
+
+    const displayDictionaryName = () => {
+        return props.dictionaryName != null && props.dictionaryName !== "" ? props.dictionaryName : "未選択"
+    };
+
     const readGeneSource: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
         const files = event.target.files;
         if (files == null || !(files.length > 0)) { return; }
 
-        props.update("geneSource", JSON.parse(await files[0].text()) as WordGeneData[]);
+        const text = await files[0].text();
+        batch(() => {
+            props.update("geneSource", JSON.parse(text) as WordGeneData[]);
+            props.update("geneFileName", files[0].name);
+        });
     };
 
     const readAffixGeneSource: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
         const files = event.target.files;
         if (files == null || !(files.length > 0)) { return; }
 
-        props.update("affixSource", JSON.parse(await files[0].text()) as AffixGeneData[]);
+        const text = await files[0].text();
+        batch(() => {
+            props.update("affixSource", JSON.parse(text) as AffixGeneData[]);
+            props.update("affixFileName", files[0].name);
+        });
     };
 
-    const readDictionaries: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
+    const readDictionary: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
         const files = event.target.files;
         if (files == null || !(files.length > 0)) { return; }
 
         const dictionary = JSON.parse(await files[0].text()) as Dictionary;
         const words = dictionary.words.filter(x => !(x.entry.form.includes(" ")));
 
-        props.update("words", words);
+        batch(() => {
+            props.update("words", words);
+            props.update("dictionaryName", files[0].name);
+        });
     };
 
     const run: JSX.EventHandlerUnion<HTMLButtonElement, Event> = () => {
@@ -100,6 +135,10 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
             props.update("output", output);
         }
     };
+
+    let geneSourceRef: HTMLInputElement | undefined;
+    let affixSourceRef: HTMLInputElement | undefined;
+    let dictionaryRef: HTMLInputElement | undefined;
 
     return (
         <div id="wordgene" class="main">
@@ -117,15 +156,21 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
             <div class="row row-wrap">
                 <div class="row text-nowrap align-center">
                     <label class="text-nowrap">基本遺伝子データ：</label>
-                    <input type="file" multiple onchange={readGeneSource}/>
+                    <button onclick={() => geneSourceRef?.click()}>読込</button>
+                    <span class="text-nowrap file-name" title={displayGeneFilneName()}>{displayGeneFilneName()}</span>
+                    <input type="file" multiple onchange={readGeneSource} style="display: none" ref={geneSourceRef} />
                 </div>
                 <div class="row text-nowrap align-center">
                     <label class="text-nowrap">接辞遺伝子データ：</label>
-                    <input type="file" multiple onchange={readAffixGeneSource}/>
+                    <button onclick={() => affixSourceRef?.click()}>読込</button>
+                    <span class="text-nowrap file-name" title={displayAffixFileName()}>{displayAffixFileName()}</span>
+                    <input type="file" multiple onchange={readAffixGeneSource} style="display: none" ref={affixSourceRef} />
                 </div>
                 <div class="row text-nowrap align-center">
                     <label class="text-nowrap">辞書データ：</label>
-                    <input type="file" multiple onchange={readDictionaries}/>
+                    <button onclick={() => dictionaryRef?.click()}>読込</button>
+                    <span class="text-nowrap file-name" title={displayDictionaryName()}>{displayDictionaryName()}</span>
+                    <input type="file" multiple onchange={readDictionary} style="display: none" ref={dictionaryRef} />
                 </div>
             </div>
             <div class="row result-area">

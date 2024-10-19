@@ -96,3 +96,10 @@ menu.tab-menu {
       border: 1px solid black;
     }
 }
+
+.file-name {
+    min-width: 150px;
+    max-width: 100%;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+}
