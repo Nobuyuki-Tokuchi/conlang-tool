@@ -2,7 +2,6 @@ import { For, JSX, batch, createSignal } from "solid-js";
 import { NormalWordGen } from "./wordgen/normal";
 import { WordgenData, WordGenenerator } from "./wordgen/wordgen";
 import { HeadPlusWordGen } from "./wordgen/headplus";
-import { PrunningWordGen } from "./wordgen/prunning";
 import { Data, Methods } from "../common/common";
 
 type Dictionary = {
@@ -24,7 +23,6 @@ const RETRY_COUNT = 20;
 const CREATE_TYPE_LIST = [
     { value: "normal", text: "通常" },
     { value: "headplus", text: "語頭調整版" },
-    { value: "prunning", text: "剪定"}
 ] as const;
 
 type CREATE_TYPE_VALUE = (typeof CREATE_TYPE_LIST)[number]["value"];
@@ -103,13 +101,6 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
             case "headplus":
                 {
                     const temporary = new HeadPlusWordGen(commonData);
-                    temporary.createTable(originalWords);
-                    wordgen = temporary;
-                }
-                break;
-            case "prunning":
-                {
-                    const temporary = new PrunningWordGen(commonData);
                     temporary.createTable(originalWords);
                     wordgen = temporary;
                 }
