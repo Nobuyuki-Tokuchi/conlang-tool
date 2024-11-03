@@ -1,6 +1,6 @@
 import { WordgenData, WordGenenerator as WordGen } from "./wordgen";
 
-export class HeadPlusWordGen implements WordGen {
+export class AppendWordGen implements WordGen {
     readonly #transitionTable: Map<string, number>;
     readonly #wordHeadTable: Map<string, number>;
     readonly #commonData: WordgenData;
@@ -20,6 +20,8 @@ export class HeadPlusWordGen implements WordGen {
         this.#transitionTable.clear();
     
         for (const input of inputList) {
+            if (input.length < 3) { continue; }
+
             const headKey = input.slice(0, Math.max(2, depth - 1));
             this.#wordHeadTable.set(headKey, (this.#wordHeadTable.get(headKey) ?? 0) + 1);
 

@@ -1,7 +1,7 @@
 import { For, JSX, batch, createSignal } from "solid-js";
 import { NormalWordGen } from "./wordgen/normal";
 import { WordgenData, WordGenenerator } from "./wordgen/wordgen";
-import { HeadPlusWordGen } from "./wordgen/headplus";
+import { AppendWordGen } from "./wordgen/append";
 import { Data, Methods } from "../common/common";
 
 type Dictionary = {
@@ -22,7 +22,7 @@ const DEPTH = 3;
 const RETRY_COUNT = 20;
 const CREATE_TYPE_LIST = [
     { value: "normal", text: "通常" },
-    { value: "headplus", text: "語頭調整版" },
+    { value: "append", text: "調整版" },
 ] as const;
 
 type CREATE_TYPE_VALUE = (typeof CREATE_TYPE_LIST)[number]["value"];
@@ -98,9 +98,9 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
         let wordgen: WordGenenerator;
 
         switch (props.selectedType) {
-            case "headplus":
+            case "append":
                 {
-                    const temporary = new HeadPlusWordGen(commonData);
+                    const temporary = new AppendWordGen(commonData);
                     temporary.createTable(originalWords);
                     wordgen = temporary;
                 }

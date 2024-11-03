@@ -12,7 +12,12 @@ type Dictionary = {
     }[];
 };
 
-type WordGeneData = {
+type GeneSource = {
+    affix: AffixGeneData[];
+    gene: GeneData[];
+};
+
+type GeneData = {
     character: string;
     gene: string;
 };
@@ -30,8 +35,8 @@ type CreatedGene = {
 
 export type Props = {
     input: string;
-    geneSource: WordGeneData[];
-    affixSource: AffixGeneData[];
+    geneData: GeneData[];
+    affixGeneData: AffixGeneData[];
     words: Dictionary["words"];
     output: CreatedGene[];
 
@@ -46,8 +51,8 @@ const GENE_VALUES = ["0","1","2","3"] as const;
 export function createData(): Data<Props> & Methods<Props> {
     return {
         input: createSignal<string>(""),
-        geneSource: createSignal<WordGeneData[]>([]),
-        affixSource: createSignal<AffixGeneData[]>([]),
+        geneData: createSignal<GeneData[]>([]),
+        affixGeneData: createSignal<AffixGeneData[]>([]),
         words: createSignal<Dictionary["words"]>([]),
         output: createSignal<CreatedGene[]>([]),
 
@@ -62,8 +67,8 @@ export function createData(): Data<Props> & Methods<Props> {
         get getters(): Props {
             return {
                 input: this.input[0](),
-                geneSource: this.geneSource[0](),
-                affixSource: this.affixSource[0](),
+                geneData: this.geneData[0](),
+                affixGeneData: this.affixGeneData[0](),
                 words: this.words[0](),
                 output: this.output[0](),
 
@@ -80,10 +85,6 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         return props.geneFileName != null && props.geneFileName !== "" ? props.geneFileName : "未選択"
     };
 
-    const displayAffixFileName = () => {
-        return props.affixFileName != null && props.affixFileName !== "" ? props.affixFileName : "未選択"
-    };
-
     const displayDictionaryName = () => {
         return props.dictionaryName != null && props.dictionaryName !== "" ? props.dictionaryName : "未選択"
     };
@@ -93,20 +94,12 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         if (files == null || !(files.length > 0)) { return; }
 
         const text = await files[0].text();
+        const source: GeneSource = JSON.parse(text);
+
         batch(() => {
-            props.update("geneSource", JSON.parse(text) as WordGeneData[]);
+            props.update("geneData", source.gene);
+            props.update("affixGeneData", source.affix);
             props.update("geneFileName", files[0].name);
-        });
-    };
-
-    const readAffixGeneSource: JSX.ChangeEventHandlerUnion<HTMLInputElement, Event> = async (event) => {
-        const files = event.target.files;
-        if (files == null || !(files.length > 0)) { return; }
-
-        const text = await files[0].text();
-        batch(() => {
-            props.update("affixSource", JSON.parse(text) as AffixGeneData[]);
-            props.update("affixFileName", files[0].name);
         });
     };
 
@@ -127,17 +120,16 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         const inputList = props.input.split(" ");
 
         if (inputList.length > 1) {
-            const output = [...props.output, hybridizeGene(props.geneSource, props.affixSource, props.words, inputList)];
+            const output = [...props.output, hybridizeGene(props, inputList)];
             props.update("output", output);
         }
         else {
-            const output = [...props.output, createGene(props.geneSource, props.input)];
+            const output = [...props.output, createGene(props)];
             props.update("output", output);
         }
     };
 
     let geneSourceRef: HTMLInputElement | undefined;
-    let affixSourceRef: HTMLInputElement | undefined;
     let dictionaryRef: HTMLInputElement | undefined;
 
     return (
@@ -155,16 +147,10 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
             </div>
             <div class="row row-wrap">
                 <div class="row text-nowrap align-center">
-                    <label class="text-nowrap">基本遺伝子データ：</label>
+                    <label class="text-nowrap">遺伝子データ：</label>
                     <button onclick={() => geneSourceRef?.click()}>読込</button>
                     <span class="text-nowrap file-name" title={displayGeneFilneName()}>{displayGeneFilneName()}</span>
                     <input type="file" multiple onchange={readGeneSource} style="display: none" ref={geneSourceRef} />
-                </div>
-                <div class="row text-nowrap align-center">
-                    <label class="text-nowrap">接辞遺伝子データ：</label>
-                    <button onclick={() => affixSourceRef?.click()}>読込</button>
-                    <span class="text-nowrap file-name" title={displayAffixFileName()}>{displayAffixFileName()}</span>
-                    <input type="file" multiple onchange={readAffixGeneSource} style="display: none" ref={affixSourceRef} />
                 </div>
                 <div class="row text-nowrap align-center">
                     <label class="text-nowrap">辞書データ：</label>
@@ -190,8 +176,8 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
     );
 }
 
-function hybridizeGene(wordGeneData: WordGeneData[], affix: AffixGeneData[],  words: Dictionary["words"], inputList: string[]): CreatedGene {
-    const genes = inputList.map(x => getWordGene(words, affix, x));
+function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
+    const genes = inputList.map(x => getWordGene(props.words, props.affixGeneData, x));
 
     if (genes.length === 0) {
         // 全く単語が無い場合にはエラーメッセージを返す
@@ -202,7 +188,7 @@ function hybridizeGene(wordGeneData: WordGeneData[], affix: AffixGeneData[],  wo
         };
     }
 
-    const result: [WordGeneData["gene"][], WordGeneData["gene"][]] = [
+    const result: [GeneData["gene"][], GeneData["gene"][]] = [
         [],
         []
     ];
@@ -227,7 +213,7 @@ function hybridizeGene(wordGeneData: WordGeneData[], affix: AffixGeneData[],  wo
             }
         }
         else {
-            const [value, mutationMessages]: [string[][], string[]] = values.map(x => mutatedGene(x.trim().split(" "), true)).reduce<[string[][], string[]]>((acc, x) => {
+            const [value, mutationMessages]: [string[][], string[]] = values.map(x => mutatedGene(x.trim().split(" "))).reduce<[string[][], string[]]>((acc, x) => {
                 acc[0].push(x[0]);
                 acc[1].push(...x[1]);
                 return acc;
@@ -255,7 +241,7 @@ function hybridizeGene(wordGeneData: WordGeneData[], affix: AffixGeneData[],  wo
 
     return {
         word: result.map(x => x.map(y => {
-            const c = wordGeneData.find(z => z.gene === y)!.character;
+            const c = props.geneData.find(z => z.gene === y)!.character;
             return c === "" ? "_" : c;
         }).join("")).join(", "),
         gene: result.map(x => x.join(" ")).join(", "),
@@ -275,18 +261,18 @@ function getWordGene(words: Dictionary["words"], affix: AffixGeneData[], input: 
     return [gene, isAffix];
 }
 
-function createGene(wordGeneData: WordGeneData[], input: string): CreatedGene {
-    const inputGeneValue = toChars(input).map(x => toGeneValue(wordGeneData, x));
+function createGene(props: Props): CreatedGene {
+    const inputGeneValue = toChars(props.input).map(x => toGeneValue(props.geneData, x));
 
     if (isSuccess(MUTATION_VALUE / 4)) {
         const insertIndex = getRandomIndex(inputGeneValue.length);
-        inputGeneValue.splice(insertIndex, 0, toGeneValue(wordGeneData, ""));
+        inputGeneValue.splice(insertIndex, 0, toGeneValue(props.geneData, ""));
     }
 
     const geneValues = [
         inputGeneValue,
         inputGeneValue.map(x => {
-            const none = isSuccess(0.25) ? "000" : toGeneValue(wordGeneData, "");
+            const none = isSuccess(0.25) ? "000" : toGeneValue(props.geneData, "");
             return Array.from(x).map((y, i) => Number.parseInt(y) ^ Number.parseInt(none[i])).join("");
         }),
     ];
@@ -301,12 +287,12 @@ function createGene(wordGeneData: WordGeneData[], input: string): CreatedGene {
     }
 
     return {
-        word: input,
+        word: props.input,
         gene: geneValues.map(x => x.join(" ")).join(", ")
     };
 }
 
-function toGeneValue(wordGeneData: WordGeneData[], str: string): WordGeneData["gene"] {
+function toGeneValue(wordGeneData: GeneData[], str: string): GeneData["gene"] {
     const list = wordGeneData.filter(x => x.character === str);
     const index = getRandomIndex(list.length);
     return list[index].gene;
@@ -383,16 +369,16 @@ function mutatedGenePart(part: string): [string, string | undefined] {
     return [newValue, mutation.length > 0 ? mutation.join(", ") : undefined];
 }
 
-function mutatedGene(gene: string[], partMutation: boolean = false): [string[], string[]] {
-    const newValue: [string[], string[]] = partMutation
-        ? gene.map(x => mutatedGenePart(x)).reduce<[string[], string[]]>((acc, x, index) => {
-            acc[0].push(x[0]);
-            if (typeof x[1] === "string") {
-                acc[1].push(`(${x[1]}: ${index})`);
-            }
-            return acc;
-        }, [[], []])
-        : [gene, []];
+function mutatedGene(gene: string[]): [string[], string[]] {
+    const newValue: [string[], string[]] = gene.reduce<[string[], string[]]>((acc, x, index) => {
+        const part = mutatedGenePart(x);
+
+        acc[0].push(part[0]);
+        if (typeof part[1] === "string") {
+            acc[1].push(`(${part[1]}: ${index})`);
+        }
+        return acc;
+    }, [[], []]);
 
     if (isSuccess(MUTATION_VALUE)) {
         // 重複
