@@ -22,14 +22,14 @@ menu.tab-menu {
 .main {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 8px);
-    row-gap: 8px;
+    height: calc(100% - var(--default-gap) * 2);
+    row-gap: var(--default-gap) * 2;
     flex: 1 1;
 }
 
 .row {
     display: flex;
-    column-gap: 8px;
+    column-gap: var(--default-gap) * 2;
 
     > .half {
         flex-basis: 50%;
@@ -102,4 +102,11 @@ menu.tab-menu {
     max-width: 100%;
     overflow-x: hidden;
     text-overflow: ellipsis;
+}
+
+hr.separate {
+    width: calc(100% - var(--default-gap) * 2);
+    margin: calc(var(--default-gap) * 2);
+    border-color: gray;
+    border-style: solid;
 }

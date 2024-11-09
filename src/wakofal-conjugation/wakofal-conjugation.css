@@ -1,0 +1,36 @@
+.noun-checker {
+    display: flex;
+    height: calc(100% - 8px);
+    row-gap: 8px;
+    flex: 1 1;
+
+    > .stretch {
+        flex: 1 1;
+    }
+}
+
+.table {
+    --gap: 4px;
+
+    > .row {
+        > .type,
+        > .form {
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+
+        > .type {
+            flex-basis: calc(25% - var(--gap) * 2); 
+        }
+
+        > .form {
+            flex-basis: calc(75% - var(--gap) * 2); 
+        }
+    }
+}
+
+.textarea {
+    box-sizing: border-box;
+    resize: none;
+    height: 100%;
+}
