@@ -36,9 +36,9 @@ export function createData(): Data<Pick<Props, "mode">> & Omit<Props, "mode"> & 
     };
 }
 
-function ConjugationChecker(props: Props & Pick<Methods<Props>, "update">) {
+function WakofalConjugation(props: Props & Pick<Methods<Props>, "update">) {
     return (
-        <div id="conjunction-check" class="main">
+        <div id="wakofal-conjugation" class="main">
             <div class="row">
                 <select value={props.mode} onchange={(event) => props.update("mode", event.target.value as Mode)}>
                     <option value="noun">名詞</option>
@@ -58,4 +58,4 @@ function ConjugationChecker(props: Props & Pick<Methods<Props>, "update">) {
     );
 }
 
-export default ConjugationChecker;
+export default WakofalConjugation;
