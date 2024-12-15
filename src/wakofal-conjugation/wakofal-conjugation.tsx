@@ -4,7 +4,7 @@ import NounConjugationChecker from "./noun-conjugation";
 import * as Noun from "./noun-conjugation";
 import VerbConjugationChecker from "./verb-conjugation";
 import * as Verb from "./verb-conjugation";
-import "./conjugation-checker.css"
+import "./wakofal-conjugation.css";
 
 export type Props = {
     mode: Mode;
