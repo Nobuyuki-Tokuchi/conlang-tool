@@ -13,7 +13,7 @@ type Dictionary = {
 };
 
 type GeneSource = {
-    affix?: AffixGeneData[];
+    affixList?: AffixGeneData[];
     gene: GeneData[];
     genePartValues: string[];
 };
@@ -24,6 +24,7 @@ type GeneData = {
 };
 
 type AffixGeneData = {
+    type: "prefix" | "suffix" | "infix";
     affix: string;
     genes: string;
 };
@@ -97,7 +98,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         batch(() => {
             const newSource: GeneSource = {
                 gene: source.gene,
-                affix: source.affix,
+                affixList: source.affixList,
                 genePartValues: Array.from(GENE_VALUES),
             };
 
@@ -184,7 +185,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
 }
 
 function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
-    const genes = inputList.map(x => getWordGene(props.words, props.geneSource, x));
+    const genes = inputList.map(x => getWordGene(props.words, props.geneSource, x)).filter(x => x !== null);
 
     if (genes.length === 0) {
         // 全く単語が無い場合にはエラーメッセージを返す
@@ -202,47 +203,32 @@ function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
     const mutationMessage: string[] = [];
     
     for (let i = 0; i < genes.length; i++) {
-        const [gene, isAffix] = genes[i];
+        const gene = genes[i];
         if (gene == null) { continue; }
 
         const values = gene.split(",", result.length);
+        const [value, mutationMessages]: [string[][], string[]] = values.map(x => mutatedGene(x.trim().split(" "), props.geneSource)).reduce<[string[][], string[]]>((acc, x) => {
+            acc[0].push(x[0]);
+            acc[1].push(...x[1]);
+            return acc;
+        },[[], []]);
 
-        if (isAffix) {
-            const value = values.map(x => x.trim().split(" "));
+        if (doCointoss()) {
+            value.reverse();
+        }
+        const sliceIndex = clamp(value[0].length / 2 + 1, 0, value[0].length);
 
-            if (i === 0) {
-                result[0].push(...value[0]);
-                result[1].push(...value[1]);
-            }
-            else {
-                result[0].push(...value[0]);
-                result[1].unshift(...value[1]);
-            }
+        if (i === 0) {
+            result[0].push(...value[0].slice(0, sliceIndex));
+            result[1].push(...value[1].slice(-sliceIndex));
         }
         else {
-            const [value, mutationMessages]: [string[][], string[]] = values.map(x => mutatedGene(x.trim().split(" "), props.geneSource)).reduce<[string[][], string[]]>((acc, x) => {
-                acc[0].push(x[0]);
-                acc[1].push(...x[1]);
-                return acc;
-            },[[], []]);
+            result[0].push(...value[0].slice(-sliceIndex));
+            result[1].unshift(...value[1].slice(0, sliceIndex));
+        }
 
-            if (doCointoss()) {
-                value.reverse();
-            }
-            const sliceIndex = clamp(value[0].length / 2 + 1, 0, value[0].length);
-
-            if (i === 0) {
-                result[0].push(...value[0].slice(0, sliceIndex));
-                result[1].push(...value[1].slice(-sliceIndex));
-            }
-            else {
-                result[0].push(...value[0].slice(-sliceIndex));
-                result[1].unshift(...value[1].slice(0, sliceIndex));
-            }
-
-            if (mutationMessages.length > 0) {
-                mutationMessage.push(...mutationMessages);
-            }
+        if (mutationMessages.length > 0) {
+            mutationMessage.push(...mutationMessages);
         }
     }
 
@@ -256,47 +242,207 @@ function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
     }
 }
 
-function getWordGene(words: Dictionary["words"], source: GeneSource, input: string): [string | undefined, boolean] {
-    let gene = words.find(x => x.entry.form === input)?.contents?.find(x => x.title === "遺伝子データ")?.text;
-    let isAffix = false;
+function getWordGene(words: Dictionary["words"], source: GeneSource, input: string): string | null {
+    console.log(input, source.affixList, /(\[.+\]|-)/.test(input));
 
-    if (gene == null && source.affix) {
-        gene = source.affix.find(x => x.affix === input)?.genes;
-        isAffix = gene != null;
+    if (source.affixList && /(\[.+\]|-)/.test(input)) {
+        const splitWord = input.split("-");
+        const gene = ["", ""];
+        let isSuffix = false;
+
+        for (let i = 0; i < splitWord.length; i++) {
+            let word = splitWord[i];
+            const infixPart = isSuffix ? undefined : /\[.+\]/.exec(word)?.[0];
+            let infix: [string[], string, string] | null = null;
+
+            if (infixPart) {
+                word = word.replaceAll(infixPart, "");
+                const infixWord = infixPart.substring(1, infixPart.length - 1);
+                const infixGene = splitTrim(source.affixList.find(x => x.type === "infix" && x.affix === infixWord)?.genes, ",");
+
+                if (infixGene) {
+                    const subset = toChars(splitWord[i].substring(0, splitWord[i].indexOf(infixPart)));
+                    infix = [subset, infixGene[0], infixGene[1]];
+                }
+            }
+
+            const wordGene = splitTrim(words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "遺伝子データ")?.text, ",");
+            if (wordGene) {
+                if (infix) {
+                    let wordGeneParts = wordGene.map(x => x.split(" "));
+                    let subsetIndex = 0;
+                    let insertIndex = 0;
+                    const subset = infix[0];
+
+                    while (insertIndex < wordGeneParts[0].length && subsetIndex < subset.length) {
+                        const geneParts = source.gene.filter(x => x.character === subset[subsetIndex]);
+                        if (geneParts.some(x => wordGeneParts[0][subsetIndex] === x.gene || wordGeneParts[1][subsetIndex] === x.gene)) {
+                            subsetIndex++;
+                        }
+                        insertIndex++;
+                    }
+                    wordGeneParts[0].splice(insertIndex, 0, ...splitTrim(infix[1], " "));
+                    wordGeneParts[1].splice(insertIndex, 0, ...splitTrim(infix[2], " "));
+
+                    gene[0] += " " + wordGeneParts[0].join(" ");
+                    gene[1] += " " + wordGeneParts[1].join(" ");
+                }
+                else {
+                    gene[0] += " " + wordGene[0];
+                    gene[1] += " " + wordGene[1];
+                }
+
+                isSuffix = true;
+            }
+            else {
+                const type = isSuffix ? "suffix" : "prefix";
+                const affixGene = splitTrim(source.affixList.find(x => x.type === type && x.affix === word)?.genes, ",");
+
+                if (affixGene) {
+                    gene[0] += " " + affixGene[0];
+                    gene[1] += " " + affixGene[1];
+                }
+            }
+        }
+
+        return gene.map(x => x.trim()).join(",");
     }
+    else {
+        let gene = words.find(x => x.entry.form === input)?.contents?.find(x => x.title === "遺伝子データ")?.text;
 
-    return [gene, isAffix];
+        return gene ?? null;
+    }
+}
+
+function splitTrim(genes: string, separator: string): string[];
+function splitTrim(genes: string | undefined | null, separator: string): string[] | undefined;
+function splitTrim(genes: string | undefined | null, separator: string): string[] | undefined {
+    return genes?.split(separator)?.map(x => x.trim());
 }
 
 function createGene(props: Props): CreatedGene {
-    const inputGeneValue = toChars(props.input).map(x => toGeneValue(props.geneSource, x));
+    if (props.geneSource.affixList && /(\[.+\]|-)/.test(props.input)) {
 
-    if (isSuccess(MUTATION_VALUE / 4)) {
-        const insertIndex = getRandomIndex(inputGeneValue.length);
-        inputGeneValue.splice(insertIndex, 0, toGeneValue(props.geneSource, ""));
-    }
+        const splitWord = props.input.split("-");
+        let prefix: [string, string] | null = null;
+        let suffix: [string, string] | null = null;
+        let infix: [string[], string, string] | null = null;
+        let isSuffix = false;
+        const geneValue = ["", ""];
 
-    const geneValues = [
-        inputGeneValue,
-        inputGeneValue.map(x => {
-            const none = isSuccess(0.25) ? "000" : toGeneValue(props.geneSource, "");
-            return Array.from(x).map((y, i) => Number.parseInt(y) ^ Number.parseInt(none[i])).join("");
-        }),
-    ];
+        for (let i = 0; i < splitWord.length; i++) {
+            let word = splitWord[i];
+            const infixPart = isSuffix ? undefined : /\[.+\]/.exec(word)?.[0];
 
-    for (let i = 0; i < geneValues.length; i++) {
-        const geneValue = geneValues[i];
-        if (!doCointoss()) {
-            const tmp = geneValue[0];
-            geneValue[0] = geneValue[1];
-            geneValue[1] = tmp;
+            if (infixPart) {
+                word = word.replaceAll(infixPart, "");
+                const infixWord = infixPart.substring(1, infixPart.length - 1);
+                const infixGene = splitTrim(props.geneSource.affixList.find(x => x.type === "infix" && x.affix === infixWord)?.genes, ",");
+
+                if (infixGene) {
+                    const subset = toChars(splitWord[i].substring(0, splitWord[i].indexOf(infixPart)));
+                    infix = [subset, infixGene[0], infixGene[1]];
+                }
+            }
+
+            const wordGene = splitTrim(props.words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "遺伝子データ")?.text, ",");
+            if (wordGene) {
+                if (infix) {
+                    let wordGeneParts = wordGene.map(x => x.split(" "));
+                    let subsetIndex = 0;
+                    let insertIndex = 0;
+                    const subset = infix[0];
+
+                    while (insertIndex < wordGeneParts[0].length && subsetIndex < subset.length) {
+                        const geneParts = props.geneSource.gene.filter(x => x.character === subset[subsetIndex]);
+                        if (geneParts.some(x => wordGeneParts[0][subsetIndex] === x.gene || wordGeneParts[1][subsetIndex] === x.gene)) {
+                            subsetIndex++;
+                        }
+                        insertIndex++;
+                    }
+                    wordGeneParts[0].splice(insertIndex, 0, ...splitTrim(infix[1], " "));
+                    wordGeneParts[1].splice(insertIndex, 0, ...splitTrim(infix[2], " "));
+
+                    geneValue[0] += " " + wordGeneParts[0].join(" ");
+                    geneValue[1] += " " + wordGeneParts[1].join(" ");
+                }
+                else {
+                    geneValue[0] += " " + wordGene[0];
+                    geneValue[1] += " " + wordGene[1];
+                }
+
+                isSuffix = true;
+            }
+            else if (isSuffix) {
+                const suffixGene = props.geneSource.affixList.find(x => x.type === "suffix" && x.affix === word)?.genes;
+                if (suffixGene) {
+                    if (suffix === null) {
+                        suffix = ["", ""];
+                    }
+
+                    suffix[0] += " " + suffixGene[0];
+                    suffix[1] += " " + suffixGene[1];
+                }
+            }
+            else {
+                const prefixGene = splitTrim(props.geneSource.affixList.find(x => x.type === "prefix" && x.affix === word)?.genes, ",");
+                if (prefixGene) {
+                    if (prefix === null) {
+                        prefix = ["", ""];
+                    }
+
+                    prefix[0] += " " + prefixGene[0];
+                    prefix[1] += " " + prefixGene[1];
+                }
+            }
         }
-    }
 
-    return {
-        word: props.input,
-        gene: geneValues.map(x => x.join(" ")).join(", ")
-    };
+        if (prefix) {
+            geneValue[0] = prefix[0] + " " + geneValue[0];
+            geneValue[1] = prefix[1] + " " + geneValue[1];
+        }
+        if (suffix) {
+            geneValue[0] += " " + suffix[0];
+            geneValue[1] += " " + suffix[1];
+        }
+
+        return {
+            word: props.input,
+            gene: geneValue.map(x => x.trim()).join(", "),
+        };
+    }
+    else {
+        let inputGeneValue: string[] = toChars(props.input).map(x => toGeneValue(props.geneSource, x));
+    
+        if (isSuccess(MUTATION_VALUE / 4)) {
+            const insertIndex = getRandomIndex(inputGeneValue.length);
+            inputGeneValue.splice(insertIndex, 0, toGeneValue(props.geneSource, ""));
+        }
+    
+        
+        let geneValues: [string[], string[]] = [
+            inputGeneValue,
+            inputGeneValue.map(x => {
+                const none = isSuccess(0.25) ? "000" : toGeneValue(props.geneSource, "");
+                return Array.from(x).map((y, i) => Number.parseInt(y) ^ Number.parseInt(none[i])).join("");
+            }),
+        ];
+
+        for (let i = 0; i < geneValues.length; i++) {
+            const gene = geneValues[i];
+            if (!doCointoss()) {
+                const tmp = gene[0];
+                gene[0] = gene[1];
+                gene[1] = tmp;
+            }
+        }
+
+        const geneValue = geneValues.map(x => x.join(" "));
+        return {
+            word: props.input,
+            gene: geneValue.map(x => x.trim()).join(", "),
+        };
+    }
 }
 
 function toGeneValue(geneSource: GeneSource, str: string): GeneData["gene"] {

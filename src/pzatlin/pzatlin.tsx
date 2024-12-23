@@ -1,6 +1,6 @@
 import { For, JSX, batch, createSignal } from "solid-js";
 import { Data, Methods } from "../common/common";
-import { Zatlin } from "zatlin/source/index";
+import { Zatlin } from "zatlin";
 
 type CreatedWord = {
     word: string;
