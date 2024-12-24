@@ -243,8 +243,6 @@ function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
 }
 
 function getWordGene(words: Dictionary["words"], source: GeneSource, input: string): string | null {
-    console.log(input, source.affixList, /(\[.+\]|-)/.test(input));
-
     if (source.affixList && /(\[.+\]|-)/.test(input)) {
         const splitWord = input.split("-");
         const gene = ["", ""];
