@@ -155,7 +155,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
             </div>
             <div class="row row-wrap">
                 <div class="row text-nowrap align-center">
-                    <label class="text-nowrap">遺伝子データ：</label>
+                    <label class="text-nowrap">遺伝子情報設定：</label>
                     <button onclick={() => geneSourceRef?.click()}>読込</button>
                     <span class="text-nowrap file-name" title={displayGeneFilneName()}>{displayGeneFilneName()}</span>
                     <input type="file" multiple onchange={readGeneSource} style="display: none" ref={geneSourceRef} />
@@ -264,7 +264,7 @@ function getWordGene(words: Dictionary["words"], source: GeneSource, input: stri
                 }
             }
 
-            const wordGene = splitTrim(words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "遺伝子データ")?.text, ",");
+            const wordGene = splitTrim(words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "単語▼い伝金【】")?.text, ",");
             if (wordGene) {
                 if (infix) {
                     let wordGeneParts = wordGene.map(x => x.split(" "));
@@ -306,7 +306,7 @@ function getWordGene(words: Dictionary["words"], source: GeneSource, input: stri
         return gene.map(x => x.trim()).join(",");
     }
     else {
-        let gene = words.find(x => x.entry.form === input)?.contents?.find(x => x.title === "遺伝子データ")?.text;
+        let gene = words.find(x => x.entry.form === input)?.contents?.find(x => x.title === "単語遺伝子")?.text;
 
         return gene ?? null;
     }
@@ -343,7 +343,7 @@ function createGene(props: Props): CreatedGene {
                 }
             }
 
-            const wordGene = splitTrim(props.words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "遺伝子データ")?.text, ",");
+            const wordGene = splitTrim(props.words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "単語遺伝子")?.text, ",");
             if (wordGene) {
                 if (infix) {
                     let wordGeneParts = wordGene.map(x => x.split(" "));
