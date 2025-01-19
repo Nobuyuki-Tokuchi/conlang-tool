@@ -1,9 +1,9 @@
 import { Switch, Match, createSignal } from "solid-js";
 import { Data, Methods } from "../common/common";
-import NounConjugationChecker from "./noun-conjugation";
-import * as Noun from "./noun-conjugation";
-import VerbConjugationChecker from "./verb-conjugation";
-import * as Verb from "./verb-conjugation";
+import NounConjugationChecker from "./conjugation/noun-conjugation";
+import * as Noun from "./conjugation/noun-conjugation";
+import VerbConjugationChecker from "./conjugation/verb-conjugation";
+import * as Verb from "./conjugation/verb-conjugation";
 import "./wakofal-conjugation.css";
 
 export type Props = {

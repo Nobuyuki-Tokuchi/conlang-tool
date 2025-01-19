@@ -1,6 +1,6 @@
 import { For, createSignal } from "solid-js";
 import * as Common from "./conjcommon";
-import { Data, Methods } from "../common/common";
+import { Data, Methods } from "../../common/common";
 
 export type Props = {
     input: string;
