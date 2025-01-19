@@ -3,6 +3,7 @@ import { NormalWordGen } from "./wordgen/normal";
 import { WordgenData, WordGenenerator } from "./wordgen/wordgen";
 import { AppendWordGen } from "./wordgen/append";
 import { Data, Methods } from "../common/common";
+import { ReverseFrequencyWordGen } from "./wordgen/reverse-frequency";
 
 type Dictionary = {
     words: {
@@ -23,6 +24,7 @@ const RETRY_COUNT = 20;
 const CREATE_TYPE_LIST = [
     { value: "normal", text: "通常" },
     { value: "append", text: "調整版" },
+    { value: "reverse-frequency", text: "頻度逆転" },
 ] as const;
 
 type CREATE_TYPE_VALUE = (typeof CREATE_TYPE_LIST)[number]["value"];
@@ -95,12 +97,19 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
             retryCount: RETRY_COUNT,
         };
         const count = props.generateCount;
-        let wordgen: WordGenenerator;
+        let wordgen: WordGenenerator<any>;
 
         switch (props.selectedType) {
             case "append":
                 {
                     const temporary = new AppendWordGen(commonData);
+                    temporary.createTable(originalWords);
+                    wordgen = temporary;
+                }
+                break;
+            case "reverse-frequency":
+                {
+                    const temporary = new ReverseFrequencyWordGen(commonData);
                     temporary.createTable(originalWords);
                     wordgen = temporary;
                 }

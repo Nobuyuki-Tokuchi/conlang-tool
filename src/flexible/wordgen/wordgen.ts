@@ -5,6 +5,7 @@ export type WordgenData = {
     retryCount: number;
 };
 
-export interface WordGenenerator {
+export interface WordGenenerator<T> {
+    createTable(words: T): void;
     generateWord(): string;
 }

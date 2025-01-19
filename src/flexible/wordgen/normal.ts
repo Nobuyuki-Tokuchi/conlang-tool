@@ -1,8 +1,8 @@
 import { WordgenData, WordGenenerator as WordGen } from "./wordgen";
 
-export class NormalWordGen implements WordGen {
-    #transitionTable: Map<string, number>;
-    #commonData: WordgenData;
+export class NormalWordGen implements WordGen<string[]> {
+    readonly #transitionTable: Map<string, number>;
+    readonly #commonData: WordgenData;
 
     constructor(commonData: WordgenData) {
         this.#transitionTable = new Map<string, number>();
@@ -11,19 +11,20 @@ export class NormalWordGen implements WordGen {
 
     /**
      * 指定された単語のリストを使用して遷移表を作成します
-     * @param inputList 遷移表を作成するために使用する単語リスト
+     * @param words 遷移表を作成するために使用する単語リスト
      */
-    createTable(inputList: string[]): void {
+    createTable(words: string[]): void {
         const depth = this.#commonData.depth;
         this.#transitionTable.clear();
     
-        for (const input of inputList) {
+        for (const input of words) {
             for (let i = 0; i <= input.length - depth + 1; i++) {
                 const key = input.slice(i, i + depth);
                 this.#transitionTable.set(key, (this.#transitionTable.get(key) ?? 0) + 1);
             }
         }
     }
+
     /**
      * 作成した単語を返します
      * @returns 作成した単語
