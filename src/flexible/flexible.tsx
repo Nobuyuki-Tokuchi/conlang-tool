@@ -38,6 +38,7 @@ export type Props = {
     hasOriginalCount: number;
     duplicationCount: number;
     invalidCount: number;
+    successCount: number;
     input: string[];
     output: CreatedWord[];
 };
@@ -54,6 +55,7 @@ export function createData(): Data<Props> & Methods<Props> {
         hasOriginalCount: createSignal(0),
         duplicationCount: createSignal(0),
         invalidCount: createSignal(0),
+        successCount: createSignal(0),
 
         input: createSignal<string[]>([]),
         output: createSignal<CreatedWord[]>([]),
@@ -74,6 +76,7 @@ export function createData(): Data<Props> & Methods<Props> {
                 hasOriginalCount: this.hasOriginalCount[0](),
                 duplicationCount: this.duplicationCount[0](),
                 invalidCount: this.invalidCount[0](),
+                successCount: this.successCount[0](),
 
                 input: this.input[0](),
                 output: this.output[0](),
@@ -86,6 +89,7 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
     const hasOriginalCountPercent = () => (props.hasOriginalCount / props.generateCount * 100).toFixed(2);
     const duplicationCountPercent = () => (props.duplicationCount / props.generateCount * 100).toFixed(2);
     const invalidCountPercent = () => (props.invalidCount / props.generateCount * 100).toFixed(2);
+    const successCountPercent = () => (props.successCount / props.generateCount * 100).toFixed(2);
     const inputText = () => props.input.join("\n");
 
     const generateWords: JSX.EventHandlerUnion<HTMLButtonElement, Event> = () => {
@@ -128,6 +132,7 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
         let hasOriginalCount = 0;
         let duplicationCount = 0;
         let invalidCount = 0;
+        let successCount = 0;
 
         for (let i = 0; i < count; i++) {
             const word = wordgen.generateWord();
@@ -153,6 +158,10 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
             if (isInvalid) {
                 invalidCount++;
             }
+
+            if (!hasOriginal && !isDuplicated && !isInvalid) {
+                successCount++;
+            }
         }
 
         batch(() => {
@@ -160,6 +169,7 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
             props.update("hasOriginalCount", hasOriginalCount);
             props.update("duplicationCount", duplicationCount);
             props.update("invalidCount", invalidCount);
+            props.update("successCount", successCount);
         });
     }
 
@@ -236,6 +246,9 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
                 </label>
                 <label>
                     <span class="invalid">作成に失敗した個数</span>：{props.invalidCount} ({invalidCountPercent()}%)
+                </label>
+                <label>
+                    <span class="success">作成に成功した個数</span>：{props.successCount} ({successCountPercent()}%)
                 </label>
             </div>
             <div class="row result-area">

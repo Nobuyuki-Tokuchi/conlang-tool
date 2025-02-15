@@ -11,7 +11,7 @@ menu.tab-menu {
     list-style: none;
     padding: 0 var(--default-gap) 0 0;
     margin: 0;
-    row-gap: calc(var(--default-gap) * 2);
+    row-gap: var(--default-gap);
     border-right: 1px black solid;
     
     > li > button {
@@ -19,17 +19,21 @@ menu.tab-menu {
     }
 }
 
+input:read-only {
+    background-color: lightgray;
+}
+
 .main {
     display: flex;
     flex-direction: column;
     height: calc(100% - var(--default-gap) * 2);
-    row-gap: var(--default-gap) * 2;
+    row-gap: var(--default-gap);
     flex: 1 1;
 }
 
 .row {
     display: flex;
-    column-gap: var(--default-gap) * 2;
+    column-gap: calc(var(--default-gap) * 2);
 
     > .half {
         flex-basis: 50%;
