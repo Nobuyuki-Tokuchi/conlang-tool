@@ -264,7 +264,7 @@ function getWordGene(words: Dictionary["words"], source: GeneSource, input: stri
                 }
             }
 
-            const wordGene = splitTrim(words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "単語▼い伝金【】")?.text, ",");
+            const wordGene = splitTrim(words.find(x => x.entry.form === word)?.contents?.find(x => x.title === "単語遺伝子")?.text, ",");
             if (wordGene) {
                 if (infix) {
                     let wordGeneParts = wordGene.map(x => x.split(" "));
