@@ -1,0 +1,23 @@
+#xsampa2ipa {
+
+    .grid {
+        padding: 0;
+        margin: var(--default-gap);
+        display: grid;
+
+        max-width: 100%;
+        
+        column-gap: var(--default-gap);
+        row-gap: var(--default-gap);
+        grid-template-columns: auto 1fr;
+        align-items: center;
+    }
+
+    .output-ipa {
+        font-family: "Doulus SIL", "Charis SIL", "Gentium Plus", serif;
+        border: 1px black solid;
+        min-height: 12px;
+        padding: var(--default-gap);
+        padding-bottom: calc(var(--default-gap) * 2);
+    }
+}
