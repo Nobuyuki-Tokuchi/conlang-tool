@@ -13,9 +13,11 @@ type Dictionary = {
 };
 
 type GeneSource = {
+    type?: "evliibl";
     affixList?: AffixGeneData[];
     gene: GeneData[];
     genePartValues: string[];
+    replaceList?: ReplaceData[];
 };
 
 type GeneData = {
@@ -27,6 +29,11 @@ type AffixGeneData = {
     type: "prefix" | "suffix" | "infix";
     affix: string;
     genes: string;
+};
+
+type ReplaceData = {
+    source: string;
+    dest: string;
 };
 
 type CreatedGene = {
@@ -98,6 +105,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         batch(() => {
             const newSource: GeneSource = {
                 gene: source.gene,
+                replaceList: source.replaceList,
                 affixList: source.affixList,
                 genePartValues: Array.from(GENE_VALUES),
             };
@@ -259,7 +267,7 @@ function getWordGene(words: Dictionary["words"], source: GeneSource, input: stri
                 const infixGene = splitTrim(source.affixList.find(x => x.type === "infix" && x.affix === infixWord)?.genes, ",");
 
                 if (infixGene) {
-                    const subset = toChars(splitWord[i].substring(0, splitWord[i].indexOf(infixPart)));
+                    const subset = toChars(splitWord[i].substring(0, splitWord[i].indexOf(infixPart)), source);
                     infix = [subset, infixGene[0], infixGene[1]];
                 }
             }
@@ -338,7 +346,7 @@ function createGene(props: Props): CreatedGene {
                 const infixGene = splitTrim(props.geneSource.affixList.find(x => x.type === "infix" && x.affix === infixWord)?.genes, ",");
 
                 if (infixGene) {
-                    const subset = toChars(splitWord[i].substring(0, splitWord[i].indexOf(infixPart)));
+                    const subset = toChars(splitWord[i].substring(0, splitWord[i].indexOf(infixPart)), props.geneSource);
                     infix = [subset, infixGene[0], infixGene[1]];
                 }
             }
@@ -410,7 +418,7 @@ function createGene(props: Props): CreatedGene {
         };
     }
     else {
-        let inputGeneValue: string[] = toChars(props.input).map(x => toGeneValue(props.geneSource, x));
+        let inputGeneValue: string[] = toChars(props.input, props.geneSource).map(x => toGeneValue(props.geneSource, x));
     
         if (isSuccess(MUTATION_VALUE / 4)) {
             const insertIndex = getRandomIndex(inputGeneValue.length);
@@ -449,27 +457,14 @@ function toGeneValue(geneSource: GeneSource, str: string): GeneData["gene"] {
     return list[index].gene;
 }
 
-function toChars(input: string): string[] {
-    return Array.from(input.replaceAll(/[áéíóúűő]/gi, (x) => {
-        switch (x) {
-            case "á":
-                return "aa";
-            case "é":
-                return "ee";
-            case "í":
-                return "ii";
-            case "ó":
-                return "oo";
-            case "ú":
-                return "uu";
-            case "ő":
-                return "öö";
-            case "ű":
-                return "üü";
-            default:
-                return x;
-        }
-    }));
+function toChars(input: string, geneSource: GeneSource): string[] {
+    const replaceList = geneSource.replaceList;
+    if (replaceList == null) {
+        return Array.from(input);
+    }
+    
+    const replaceRegexp = new RegExp(`[${replaceList.map(x => x.source).join("")}]`, "gi");
+    return Array.from(input.replaceAll(replaceRegexp, x => replaceList.find(y => y.source === x)?.dest ?? x));
 }
 
 function mutatedGenePart(part: string, geneSource: GeneSource): [string, string | undefined] {
