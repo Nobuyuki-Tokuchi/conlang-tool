@@ -196,11 +196,11 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
     };
 
     return (
-        <div class="main">
-            <div class="row">
-                <div class="row half align-center">
-                    <button class="text-nowrap" onclick={generateWords}>実行</button>
-                    <select onchange={(event) => props.update("selectedType", toCreateType(event.target.value))} value={props.selectedType}>
+        <div class="flex flex-col h-full gap-1 p-1 flex-1">
+            <div class="flex gap-x-4">
+                <div class="flex flex-1/2 items-center gap-x-1">
+                    <InternalButton text="実行" onclick={generateWords} />
+                    <select class="flex-auto p-1 border-solid border-2 border-black" onchange={(event) => props.update("selectedType", toCreateType(event.target.value))} value={props.selectedType}>
                         <For each={CREATE_TYPE_LIST}>
                             {(item) => (
                                 <option value={item.value}>{item.text}</option>
@@ -208,55 +208,59 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
                         </For>
                     </select>
                 </div>
-                <div class="row half align-center">
-                    <button onclick={() => dictionariesRef?.click()}>読込</button>
-                    <input type="file" multiple onchange={readDictionaries} style="display: none" ref={dictionariesRef}  />
+                <div class="flex flex-1/2 items-center gap-x-1">
+                    <InternalButton text="読込" onclick={() => dictionariesRef?.click()} />
+                    <input type="file" class="hidden" multiple onchange={readDictionaries} ref={dictionariesRef}  />
                     <label class="text-nowrap">
                         <input type="checkbox" checked={props.isAppend} onchange={(event) => props.update("isAppend", event.target.checked)}/>
                         追記にする
                     </label>
                 </div>
             </div>
-            <div class="row row-wrap align-center">
-                <div class="row text-nowrap align-center">
+            <div class="flex gap-x-4 gap-y-1 flex-wrap items-center">
+                <div class="flex gap-x-1 text-nowrap items-center">
                     <label class="text-nowrap">
                         作成数：
                     </label>
-                    <input class="input-line" type="number" min="10" max="1000" value={props.generateCount} onchange={(event) => props.update("generateCount", event.target.valueAsNumber)}/>
+                    <input class="flex-auto p-1 border-solid border-2 border-black" type="number" min="10" max="1000" value={props.generateCount} onchange={(event) => props.update("generateCount", event.target.valueAsNumber)}/>
                 </div>
-                <div class="row text-nowrap align-center">
+                <div class="flex gap-x-1 text-nowrap items-center">
                     <label class="text-nowrap">
                         最小長：
                     </label>
-                    <input class="input-line" type="number" min={DEPTH} value={props.minLength} onchange={(event) => props.update("minLength", event.target.valueAsNumber)}/>
+                    <input class="flex-auto p-1 border-solid border-2 border-black" type="number" min={DEPTH} value={props.minLength} onchange={(event) => props.update("minLength", event.target.valueAsNumber)}/>
                 </div>
-                <div class="row text-nowrap align-center">
+                <div class="flex gap-x-1 text-nowrap items-center">
                     <label class="text-nowrap">
                         最大長：
                     </label>
-                    <input class="input-line" type="number" min={props.minLength} value={props.maxLength} onchange={(event) => props.update("maxLength", event.target.valueAsNumber)}/>
+                    <input class="flex-auto p-1 border-solid border-2 border-black" type="number" min={props.minLength} value={props.maxLength} onchange={(event) => props.update("maxLength", event.target.valueAsNumber)}/>
                 </div>
             </div>
-            <div class="row align-center">
+            <div class="flex gap-x-1 items-center">
                 <label>
-                    <span class="has-original">既存の単語にある個数</span>：{props.hasOriginalCount} ({hasOriginalCountPercent()}%)
+                    <span class="text-nowrap font-bold">既存の単語にある個数：</span>
+                    <span class="text-nowrap">{props.hasOriginalCount} ({hasOriginalCountPercent()}%)</span>
                 </label>
                 <label>
-                    <span class="duplication">重複している個数</span>：{props.duplicationCount} ({duplicationCountPercent()}%)
+                    <span class="text-nowrap line-through bg-cyan-200">重複している個数：</span>
+                    <span class="text-nowrap">{props.duplicationCount} ({duplicationCountPercent()}%)</span>
                 </label>
                 <label>
-                    <span class="invalid">作成に失敗した個数</span>：{props.invalidCount} ({invalidCountPercent()}%)
+                    <span class="text-nowrap text-white bg-blue-900">作成に失敗した個数：</span>
+                    <span class="text-nowrap">{props.invalidCount} ({invalidCountPercent()}%)</span>
                 </label>
                 <label>
-                    <span class="success">作成に成功した個数</span>：{props.successCount} ({successCountPercent()}%)
+                    <span class="text-nowrap">作成に成功した個数：</span>
+                    <span class="text-nowrap">{props.successCount} ({successCountPercent()}%)</span>
                 </label>
             </div>
-            <div class="row result-area">
-                <textarea class="text input" value={inputText()} onchange={(event) => props.update("input", event.target.value.split("\n"))}></textarea>
-                <div class="text output">
+            <div class="flex gap-x-2 h-full overflow-hidden">
+                <textarea class="resize-none flex-1/2 m-0 p-0 border-2 border-black border-solid" value={inputText()} onchange={(event) => props.update("input", event.target.value.split("\n"))}></textarea>
+                <div class="resize-none flex-1/2 overflow-y-scroll border-2 border-black border-solid">
                     <For each={props.output}>
                         {(item) => (
-                            <div classList={{ "has-original": item.hasOriginal, "duplication": item.isDuplicated, "invalid": item.isInvalid }}>{item.word}</div>
+                            <div classList={{ "font-bold": item.hasOriginal, "line-through bg-cyan-200": item.isDuplicated, "text-white bg-blue-900": item.isInvalid }}>{item.word}</div>
                         )}
                     </For>
                 </div>
@@ -267,6 +271,12 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
 
 function toCreateType(value: string): CREATE_TYPE_VALUE {
     return CREATE_TYPE_LIST.find(x => x.value === value)?.value ?? "normal";
+}
+
+function InternalButton(props: { text: string, onclick: JSX.ButtonHTMLAttributes<HTMLButtonElement>["onclick"] }) {
+    return (
+        <button class="text-nowrap flex-none p-1 border-solid border-2 border-black bg-white text-black hover:bg-gray-500 hover:text-white" onclick={props.onclick}>{props.text}</button>
+    );
 }
 
 export default Flexible;

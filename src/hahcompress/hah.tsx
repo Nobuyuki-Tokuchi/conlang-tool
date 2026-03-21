@@ -84,55 +84,53 @@ function Hah(props: Props & Pick<Methods<Props>, "update">) {
     });
     
     return (
-        <div id="hah" class="main">
-            <div class="row">
-                <div class="row stretch align-center">
-                    <label class="fixed with-separator">モード</label>
-                    <select class="input-line" value={props.selectedMode} onchange={(event) => props.update("selectedMode", CREATE_TYPE_LIST[event.target.selectedIndex].value)}>
-                        <For each={CREATE_TYPE_LIST}>
-                            {(item) => (
-                                <option value={item.value}>{item.text}</option>
-                            )}
-                        </For>
-                    </select>
-                </div>
-                <div class="row stretch align-center">
-                    <label class="text-nowrap">入力</label>
-                    <input class="input-line" type="text" value={props.input} oninput={(event) => props.update("input", event.target.value)}/>
-                </div>
-                <div class="row stretch align-center">
-                    <Switch>
-                        <Match when={props.selectedMode === "wordLength"}>
-                        <label class="fixed with-separator">文字数</label>
-                            <input class="input-line" type="number" value={props.width} oninput={(event) => props.update("width", Math.floor(event.target.valueAsNumber / 2) * 2)} step="2" min="4" max={props.input.length}/>
-                        </Match>
-                        <Match when={props.selectedMode !== "wordLength"}>
-                        <label class="fixed with-separator">間隔</label>
-                            <input class="input-line" type="number" value={props.width} oninput={(event) => props.update("width", event.target.valueAsNumber)} min="3"/>
-                        </Match>
-                    </Switch>
-                </div>
-                <div class="row stretch align-center">
-                    <label class="text-nowrap">出力</label>
-                    <input class="input-line" type="text" value={output()} readonly={true}/>
-                </div>
+        <div class="flex flex-col w-full max-w-200 h-full gap-1 p-1">
+            <div class="flex gap-x-1 items-center">
+                <label class="text-nowrap flex-none">モード</label>
+                <select class="flex-auto p-1 border-solid border-2 border-black" value={props.selectedMode} onchange={(event) => props.update("selectedMode", CREATE_TYPE_LIST[event.target.selectedIndex].value)}>
+                    <For each={CREATE_TYPE_LIST}>
+                        {(item) => (
+                            <option value={item.value}>{item.text}</option>
+                        )}
+                    </For>
+                </select>
             </div>
-            <div class="row">
+            <div class="flex gap-x-1 items-center">
+                <label class="text-nowrap flex-none">入力</label>
+                <input class="flex-auto p-1 border-solid border-2 border-black" type="text" value={props.input} oninput={(event) => props.update("input", event.target.value)}/>
+            </div>
+            <div class="flex gap-x-1 items-center">
+                <label class="text-nowrap">出力</label>
+                <input class="flex-auto p-1 border-solid border-2 border-black" type="text" value={output()} readonly={true}/>
+            </div>
+            <div class="flex gap-x-1 items-center">
+                <Switch>
+                    <Match when={props.selectedMode === "wordLength"}>
+                    <label class="text-nowrap flex-none">文字数</label>
+                        <input class="flex-auto p-1 border-solid border-2 border-black" type="number" value={props.width} oninput={(event) => props.update("width", Math.floor(event.target.valueAsNumber / 2) * 2)} step="2" min="4" max={props.input.length}/>
+                    </Match>
+                    <Match when={props.selectedMode !== "wordLength"}>
+                    <label class="text-nowrap flex-none">間隔</label>
+                        <input class="flex-auto p-1 border-solid border-2 border-black" type="number" value={props.width} oninput={(event) => props.update("width", event.target.valueAsNumber)} min="3"/>
+                    </Match>
+                </Switch>
+            </div>
+            <div class="flex gap-x-1 items-center">
                 <Switch>
                     <Match when={props.selectedMode === "sorted"}>
-                        <div class="row stretch align-center">
+                        <div class="flex gap-x-1 flex-1 items-center">
                             <input type="checkbox" id="is-blocksort" checked={props.isBlockSort} onchange={(event) => props.update("isBlockSort", event.target.checked)}/>
-                            <label class="fixed with-separator" for="is-blocksort">ブロックソート</label>
+                            <label class="text-nowrap flex-none" for="is-blocksort">ブロックソート</label>
                         </div>
                     </Match>
                     <Match when={props.selectedMode === "separateCv"}>
-                        <div class="row stretch align-center">
-                            <label class="fixed with-separator">子音</label>
-                            <input class="input-line" type="text" value={props.consonants.join(",")} onchange={(event) => props.update("consonants", event.target.value.split(",").map(x => x.trim()))}/>
+                        <div class="flex gap-x-1 flex-1 items-center">
+                            <label class="text-nowrap flex-none">子音</label>
+                            <input class="flex-auto p-1 border-solid border-2 border-black" type="text" value={props.consonants.join(",")} onchange={(event) => props.update("consonants", event.target.value.split(",").map(x => x.trim()))}/>
                         </div>
-                        <div class="row stretch align-center">
-                            <label class="fixed with-separator">母音</label>
-                            <input class="input-line" type="text" value={props.vowels.join(",")} onchange={(event) => props.update("vowels", event.target.value.split(",").map(x => x.trim()))}/>
+                        <div class="flex gap-x-1 flex-1 items-center">
+                            <label class="text-nowrap flex-none">母音</label>
+                            <input class="flex-auto p-1 border-solid border-2 border-black" type="text" value={props.vowels.join(",")} onchange={(event) => props.update("vowels", event.target.value.split(",").map(x => x.trim()))}/>
                         </div>
                     </Match>
                 </Switch>

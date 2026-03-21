@@ -35,14 +35,28 @@ function App() {
 
     return (
         <>
-            <menu class="tab-menu">
+            <menu class="w-64 flex flex-col list-none p-1 m-0 gap-y-1 border-r-2 border-r-black border-solid ">
                 <Index each={menulist}>
-                    {(item, index) => <li><button onclick={() => setSelectedTab(index)}>{item()[0]}</button></li>}
+                    {(item, index) => 
+                        <li>
+                            <MenuTabButton item={item()} selected={(selectedTab() === index)} onSelected={() => setSelectedTab(index)} />
+                        </li>
+                    }
                 </Index>
             </menu>
             <Dynamic component={menulist[selectedTab()][1]} />
         </>
     );
+}
+
+function MenuTabButton(props: { item: [string, () => JSX.Element];  selected: boolean, onSelected: () => void}) {
+    return (
+        <button class="w-full p-1 border-solid border-2 border-black"
+            classList={{ "bg-white text-black": !props.selected, "bg-black text-white": props.selected }}
+            onclick={props.onSelected}>
+                {props.item[0]}
+        </button>
+    )
 }
 
 export default App;

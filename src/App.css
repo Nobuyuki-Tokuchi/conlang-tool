@@ -1,4 +1,4 @@
-#root {
+/* #root {
     --default-gap: 4px;
     height: calc(100vh - 16px);
     display: flex;
@@ -23,14 +23,6 @@ input:read-only {
     background-color: lightgray;
 }
 
-.main {
-    display: flex;
-    flex-direction: column;
-    height: calc(100% - var(--default-gap) * 2);
-    row-gap: var(--default-gap);
-    flex: 1 1;
-}
-
 .row {
     display: flex;
     column-gap: calc(var(--default-gap) * 2);
@@ -51,56 +43,6 @@ input:read-only {
     }
 }
 
-#root > .stretch,
-.main > .stretch,
-.row > .stretch {
-    flex-grow: 1;
-    flex-shrink: 1;
-}
-
-.align-center {
-    align-items: center;
-}
-
-.text-nowrap {
-    white-space: nowrap;
-}
-
-.has-original {
-    font-weight: bold;
-}
-
-.duplication {
-    text-decoration: line-through;
-    background-color: lightcyan;
-}
-
-.invalid {
-    color: #fff;
-    background-color: #008;
-}
-
-.result-area {
-    height: 100%;
-    overflow-y: hidden;
-
-    .text {
-      resize: none;
-      flex-basis: 50%;
-    }
-    
-    .input {
-      margin: 0;
-      padding: 0;
-      border: 1px solid black;
-    }
-    
-    .output {
-      overflow-y: scroll;
-      border: 1px solid black;
-    }
-}
-
 .file-name {
     min-width: 150px;
     max-width: 100%;
@@ -113,4 +55,4 @@ hr.separate {
     margin: calc(var(--default-gap) * 2);
     border-color: gray;
     border-style: solid;
-}
+} */
