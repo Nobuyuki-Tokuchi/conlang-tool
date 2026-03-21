@@ -93,7 +93,7 @@ function PZatlin(props: Props & Pick<Methods<Props>, "update">) {
     return (
         <div class="flex flex-col h-full gap-1 p-1 flex-1">
             <div class="flex gap-x-1">
-                <div class="flex gap-x-1 flex-1/2 items-center">
+                <div class="flex gap-x-1 basis-1/2 items-center">
                     <InternalButton text="実行" onclick={generateWords} />
                     <InternalButton text="読込"  onclick={() => zatlinFileRef?.click()} />
                     <span class="text-nowrap min-w-37.5 max-w-full overflow-x-hidden text-ellipsis" title={displayZatlinFileName()}>{displayZatlinFileName()}</span>
@@ -112,8 +112,8 @@ function PZatlin(props: Props & Pick<Methods<Props>, "update">) {
                 </label>
             </div>
             <div class="flex gap-x-2 h-full overflow-hidden">
-                <textarea class="resize-none flex-1/2 m-0 p-0 border-2 border-black border-solid" value={props.input} onchange={(event) => props.update("input", event.target.value)}></textarea>
-                <div class="resize-none flex-1/2 overflow-y-scroll border-2 border-black border-solid">
+                <textarea class="resize-none basis-1/2 m-0 p-0 border-2 border-black border-solid" value={props.input} onchange={(event) => props.update("input", event.target.value)}></textarea>
+                <div class="resize-none basis-1/2 overflow-y-scroll border-2 border-black border-solid">
                     <For each={props.output}>
                         {(item) => (
                             <div classList={{ "text-nowrap line-through bg-cyan-200": item.isDuplicated }}>{item.word}</div>

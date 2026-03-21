@@ -198,7 +198,7 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
     return (
         <div class="flex flex-col h-full gap-1 p-1 flex-1">
             <div class="flex gap-x-4">
-                <div class="flex flex-1/2 items-center gap-x-1">
+                <div class="flex basis-1/2 items-center gap-x-1">
                     <InternalButton text="実行" onclick={generateWords} />
                     <select class="flex-auto p-1 border-solid border-2 border-black" onchange={(event) => props.update("selectedType", toCreateType(event.target.value))} value={props.selectedType}>
                         <For each={CREATE_TYPE_LIST}>
@@ -208,7 +208,7 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
                         </For>
                     </select>
                 </div>
-                <div class="flex flex-1/2 items-center gap-x-1">
+                <div class="flex basis-1/2 items-center gap-x-1">
                     <InternalButton text="読込" onclick={() => dictionariesRef?.click()} />
                     <input type="file" class="hidden" multiple onchange={readDictionaries} ref={dictionariesRef}  />
                     <label class="text-nowrap">
@@ -256,8 +256,8 @@ function Flexible(props: Props & Pick<Methods<Props>, "update">) {
                 </label>
             </div>
             <div class="flex gap-x-2 h-full overflow-hidden">
-                <textarea class="resize-none flex-1/2 m-0 p-0 border-2 border-black border-solid" value={inputText()} onchange={(event) => props.update("input", event.target.value.split("\n"))}></textarea>
-                <div class="resize-none flex-1/2 overflow-y-scroll border-2 border-black border-solid">
+                <textarea class="resize-none basis-1/2 m-0 p-0 border-2 border-black border-solid" value={inputText()} onchange={(event) => props.update("input", event.target.value.split("\n"))}></textarea>
+                <div class="resize-none basis-1/2 overflow-y-scroll border-2 border-black border-solid">
                     <For each={props.output}>
                         {(item) => (
                             <div classList={{ "font-bold": item.hasOriginal, "line-through bg-cyan-200": item.isDuplicated, "text-white bg-blue-900": item.isInvalid }}>{item.word}</div>

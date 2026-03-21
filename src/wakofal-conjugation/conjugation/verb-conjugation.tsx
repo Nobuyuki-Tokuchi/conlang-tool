@@ -52,7 +52,7 @@ function VerbConjugationChecker(props: Props & Pick<Methods<Props>, "update">) {
 
     return (
         <div class="flex h-full gap-y-2 flex-1">
-            <div class="flex-1/2 flex flex-col gap-1">
+            <div class="basis-1/2 flex flex-col gap-1">
                 <div>
                     <input type="text" class="flex-auto p-1 border-solid border-2 border-black" value={props.input} oninput={(event) => props.update("input", event.target.value)}/>
                     <select class="flex-auto p-1 border-solid border-2 border-black" value={props.affixType} onchange={(event) => props.update("affixType", event.target.value as ConjugationType)}>
@@ -82,7 +82,7 @@ function VerbConjugationChecker(props: Props & Pick<Methods<Props>, "update">) {
                     )}
                 </For>
             </div>
-            <textarea class="field-sizing-fixed resize-none h-full flex-1/2 border-solid border-2 border-black  bg-gray-300" readonly value={toJson()}></textarea>
+            <textarea class="field-sizing-fixed resize-none h-full basis-1/2 border-solid border-2 border-black  bg-gray-300" readonly value={toJson()}></textarea>
         </div>
     );
 }

@@ -1,6 +1,5 @@
 import { For, JSX, batch, createSignal } from "solid-js";
 import { Data, Methods } from "../common/common";
-import "./wordgene.css";
 
 type Dictionary = {
     words: {
@@ -149,40 +148,40 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
     let dictionaryRef: HTMLInputElement | undefined;
 
     return (
-        <div id="wordgene" class="main">
-            <div class="row">
-                <div class="align-center">
-                    <button class="text-nowrap" onclick={run}>実行</button>
+        <div class="flex flex-col h-full gap-1 p-1 flex-1">
+            <div class="flex gap-x-2 items-center">
+                <div class="items-center">
+                    <InternalButton text="実行" onclick={run} />
                 </div>
-                <div class="align-center">
-                    <input type="text" value={props.input} onchange={(event) => props.update("input", event.target.value)}/>
+                <div class="items-center">
+                    <input class="flex-auto p-1 border-solid border-2 border-black" type="text" value={props.input} onchange={(event) => props.update("input", event.target.value)}/>
                 </div>
-                <div class="align-center">
-                    <button class="text-nowrap" onclick={() => props.update("output", [])}>出力クリア</button>
+                <div class="items-center">
+                    <InternalButton text="出力クリア" onclick={() => props.update("output", [])} />
                 </div>
             </div>
-            <div class="row row-wrap">
-                <div class="row text-nowrap align-center">
+            <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-x-1 text-nowrap items-center">
                     <label class="text-nowrap">遺伝子情報設定：</label>
-                    <button onclick={() => geneSourceRef?.click()}>読込</button>
-                    <span class="text-nowrap file-name" title={displayGeneFilneName()}>{displayGeneFilneName()}</span>
-                    <input type="file" multiple onchange={readGeneSource} style="display: none" ref={geneSourceRef} />
+                    <InternalButton text="読込" onclick={() => geneSourceRef?.click()} />
+                    <span class="text-nowrap min-w-37.5 max-w-full overflow-x-hidden text-ellipsis" title={displayGeneFilneName()}>{displayGeneFilneName()}</span>
+                    <input class="hidden" type="file" multiple onchange={readGeneSource} ref={geneSourceRef} />
                 </div>
-                <div class="row text-nowrap align-center">
+                <div class="flex gap-x-1 text-nowrap items-center">
                     <label class="text-nowrap">辞書データ：</label>
-                    <button onclick={() => dictionaryRef?.click()}>読込</button>
-                    <span class="text-nowrap file-name" title={displayDictionaryName()}>{displayDictionaryName()}</span>
-                    <input type="file" multiple onchange={readDictionary} style="display: none" ref={dictionaryRef} />
+                    <InternalButton text="読込" onclick={() => dictionaryRef?.click()} />
+                    <span class="text-nowrap min-w-37.5 max-w-full overflow-x-hidden text-ellipsis" title={displayDictionaryName()}>{displayDictionaryName()}</span>
+                    <input class="hidden" type="file" multiple onchange={readDictionary} ref={dictionaryRef} />
                 </div>
             </div>
-            <div class="row result-area">
-                <div class="output">
+            <div class="flex h-full overflow-hidden">
+                <div class="resize-none flex-1 gap-1 overflow-y-scroll border-2 border-black border-solid">
                     <For each={props.output}>
                         {(item) => (
-                            <div class="row text-nowwrap">
-                                <div class="character text-nowrap">{item.word}</div>
-                                <div class="gene text-nowrap">{item.gene}</div>
-                                <div class="mutation">{item.message ?? ""}</div>
+                            <div class="flex gap-x-2 text-nowwrap">
+                                <div class="word flex-none basis-1/4 text-nowrap">{item.word}</div>
+                                <div class="gene flex-1 text-nowrap">{item.gene}</div>
+                                <div class="mutation flex-1 text-nowrap">{item.message ?? ""}</div>
                             </div>
                         )}
                     </For>
@@ -192,6 +191,11 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
     );
 }
 
+function InternalButton(props: { text: string, onclick: JSX.ButtonHTMLAttributes<HTMLButtonElement>["onclick"] }) {
+    return (
+        <button class="text-nowrap flex-none p-1 border-solid border-2 border-black bg-white text-black hover:bg-gray-500 hover:text-white" onclick={props.onclick}>{props.text}</button>
+    );
+}
 function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
     const genes = inputList.map(x => getWordGene(props.words, props.geneSource, x)).filter(x => x !== null);
 

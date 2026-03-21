@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { Data, Methods } from "../common/common";
-import "./xsampa2ipa.css";
+// import "./xsampa2ipa.css";
 
 export type Props = {
     input: string;
@@ -44,18 +44,33 @@ function Xsampa2Ipa(props: Props & Pick<Methods<Props>, "update">) {
         return ipaChars.map(x => x[0]).join("");
     }
 
+    const minValue = 12;
+    const maxValue = 96;
+
     return (
-        <div id="xsampa2ipa" class="main">
-            <div class="grid">
-                <label>フォントサイズ</label>
-                <input type="number" min="12" max="96" value={props.fontSize.toString()} onchange={(event) => props.update("fontSize", event.target.valueAsNumber)} />
-                <label>入力</label>
-                <input type="text" class="input-xsampa" value={props.input} oninput={(event) => props.update("input", event.target.value)} />
-                <label>出力</label>
-                <output class="output-ipa" style={{"font-size": props.fontSize + "px", "min-height": props.fontSize + "px"}}>{output()}</output>
+        <div class="flex flex-col h-full gap-1 p-1 flex-1">
+            <div class="p-0 m-1 grid w-1/2 gap-1 grid-cols-2 items-center" style="grid-template-columns: auto 1fr;">
+                <label class="text-nowrap text-bold text-right">フォントサイズ</label>
+                <input class="p-1 border-solid border-2 border-black" type="number" min={minValue} max={maxValue} value={props.fontSize.toString()} onchange={(event) => props.update("fontSize", chops(event.target.valueAsNumber, minValue, maxValue))} />
+                <label class="text-nowrap text-bold text-right">入力</label>
+                <input class="p-1 border-solid border-2 border-black"  type="text" value={props.input} oninput={(event) => props.update("input", event.target.value)} />
+                <label class="text-nowrap text-bold text-right">出力</label>
+                <output class="p-1 pb-2 border-solid border-2 border-black" style={{"font-size": props.fontSize + "px", "min-height": props.fontSize + "px"}}>{output()}</output>
             </div>
         </div>
     )
+}
+
+function chops(value: number, minValue: number, maxValue: number): number {
+    if (value < minValue) {
+        return minValue;
+    }
+    else if (value > maxValue) {
+        return maxValue;
+    }
+    else {
+        return value;
+    }
 }
 
 const PATTERNS: { [key: string]: string | ((chars: string[], index: number) => [string, number]); } = {
