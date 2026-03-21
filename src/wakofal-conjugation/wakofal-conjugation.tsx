@@ -4,7 +4,6 @@ import NounConjugationChecker from "./conjugation/noun-conjugation";
 import * as Noun from "./conjugation/noun-conjugation";
 import VerbConjugationChecker from "./conjugation/verb-conjugation";
 import * as Verb from "./conjugation/verb-conjugation";
-import "./wakofal-conjugation.css";
 
 export type Props = {
     mode: Mode;
@@ -38,9 +37,9 @@ export function createData(): Data<Pick<Props, "mode">> & Omit<Props, "mode"> & 
 
 function WakofalConjugation(props: Props & Pick<Methods<Props>, "update">) {
     return (
-        <div id="wakofal-conjugation" class="main">
-            <div class="row">
-                <select value={props.mode} onchange={(event) => props.update("mode", event.target.value as Mode)}>
+        <div class="flex flex-col h-full gap-1 p-1 flex-1">
+            <div class="flex max-w-32 gap-1">
+                <select class="flex-auto p-1 border-solid border-2 border-black" value={props.mode} onchange={(event) => props.update("mode", event.target.value as Mode)}>
                     <option value="noun">名詞</option>
                     <option value="verb">動詞</option>
                 </select>

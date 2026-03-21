@@ -51,11 +51,11 @@ function VerbConjugationChecker(props: Props & Pick<Methods<Props>, "update">) {
     };
 
     return (
-        <div class="noun-checker">
-            <div class="table stretch">
+        <div class="flex h-full gap-y-2 flex-1">
+            <div class="flex-1/2 flex flex-col gap-1">
                 <div>
-                    <input type="text" value={props.input} oninput={(event) => props.update("input", event.target.value)}/>
-                    <select value={props.affixType} onchange={(event) => props.update("affixType", event.target.value as ConjugationType)}>
+                    <input type="text" class="flex-auto p-1 border-solid border-2 border-black" value={props.input} oninput={(event) => props.update("input", event.target.value)}/>
+                    <select class="flex-auto p-1 border-solid border-2 border-black" value={props.affixType} onchange={(event) => props.update("affixType", event.target.value as ConjugationType)}>
                         <For each={conjugationTypeKeys}>
                             {(item) => (
                                 <option value={item}>{item}</option>
@@ -67,22 +67,22 @@ function VerbConjugationChecker(props: Props & Pick<Methods<Props>, "update">) {
                         短縮有
                     </label>
                 </div>
-                <div class="row">
-                    <div class="type">活用</div>
-                    <div class="form">語形</div>
+                <div class="flex gap-1">
+                    <div class="flex-1/4 text-nowrap">活用</div>
+                    <div class="flex-3/4 text-nowrap">語形</div>
                 </div>
                 <For each={result()}>
                     {(item) => (
-                        <div class="row">
-                            <div class="type">{item.type}</div>
-                            <div class="form">
-                                <input type="text" value={item.form}/>
+                        <div class="flex gap-1">
+                            <div class="flex-1/4 text-nowrap">{item.type}</div>
+                            <div class="flex-3/4 text-nowrap">
+                                <input type="text" class="flex-auto p-1 border-solid border-2 border-black" value={item.form}/>
                             </div>
                         </div>
                     )}
                 </For>
             </div>
-            <textarea class="textarea stretch" readonly value={toJson()}></textarea>
+            <textarea class="field-sizing-fixed resize-none h-full flex-1/2 border-solid border-2 border-black  bg-gray-300" readonly value={toJson()}></textarea>
         </div>
     );
 }
