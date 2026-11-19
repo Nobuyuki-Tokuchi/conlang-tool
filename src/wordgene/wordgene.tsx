@@ -49,6 +49,7 @@ export type Props = {
 
     transitionTable: Set<string> | null;
     selectedGene: string;
+    depth: 2 | 3;
     chars: string;
     validSpells: string[];
 
@@ -71,6 +72,7 @@ export function createData(): Data<Props> & Methods<Props> {
 
         transitionTable: createSignal<Set<string> | null>(null),
         selectedGene: createSignal<string>(""),
+        depth: createSignal<2 | 3>(3),
         chars: createSignal<string>(""),
         validSpells: createSignal<string[]>([]),
 
@@ -90,6 +92,7 @@ export function createData(): Data<Props> & Methods<Props> {
 
                 transitionTable: this.transitionTable[0](),
                 selectedGene: this.selectedGene[0](),
+                depth: this.depth[0](),
                 chars: this.chars[0](),
                 validSpells: this.validSpells[0](),
 
@@ -143,7 +146,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         batch(() => {
             props.update("words", words);
             props.update("dictionaryName", files[0].name);
-            props.update("transitionTable", createValidSet(words.map(x => x.entry.form), props.geneSource));
+            props.update("transitionTable", createValidSet(words.map(x => x.entry.form), props.depth, props.geneSource));
         });
     };
 
@@ -160,41 +163,55 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         }
     };
 
+    const updateDepth: JSX.ChangeEventHandlerUnion<HTMLSelectElement, Event> = (e) => batch(() => {
+        const depth = parseInt(e.target.value) as Props["depth"];
+        props.update("depth", depth);
+        props.update("transitionTable", createValidSet(props.words.map(x => x.entry.form), props.depth, props.geneSource));
+    });
+
     const showValidSpell: JSX.EventHandlerUnion<HTMLButtonElement, Event> = () => {
         if (props.transitionTable == null) {
             return;
         }
 
-        console.debug(props.transitionTable);
         const geneList: string[][] = splitTrim(props.selectedGene, ",").map(x => x.split(" ").filter(y => y !== "").map(y => props.geneSource.gene.find(z => z.gene === y)!.character));
         const charList: [string, string][] = [];
         for (let i = 0; i < geneList[0].length; i++) {
             charList.push([geneList[0][i], geneList[1][i]]);
         }
         
-        const prefixList: string[] = [];
-        for (let i = 0; i < (1 << 3); i++) {
-            const prefix = charList[0][(i >> 2) & 1] + charList[1][(i >> 1) & 1] + charList[2][i & 1];
-            if (props.transitionTable.has(prefix) && !prefixList.some(x => x === prefix)) {
-                prefixList.push(prefix);
+        const prefixList: [string, number][] = [];
+        for (let i = 0; i < (1 << props.depth); i++) {
+            let prefix =  charList.slice(0, props.depth).reduce((acc, x, j) => acc + x[(i >> (props.depth - j - 1)) & 1], "");
+            let startIndex: number = props.depth;
+            while (prefix.length < props.depth) {
+                prefix += charList[startIndex++][i & 1];
+            }
+
+            if (props.transitionTable.has(prefix) && !prefixList.some(x => x[0] === prefix && x[1] === startIndex)) {
+                prefixList.push([prefix, startIndex]);
             }
         }
 
-        const list: string[] = [];
+        const spells: string[] = [];
         for (const prefix of prefixList) {
-            const result = createValidSpell(props.transitionTable, prefix, 3, charList);
-            if (result == null) {
-                list.push(prefix);
+            const backSpells = createValidSpell(props.transitionTable, prefix[0], prefix[1], charList);
+            if (backSpells == null) {
+                spells.push(prefix[0]);
             }
-            else if (result.length > 0) {
-                list.push(...result.map(x => prefix + x));
+            else if (backSpells.length > 0) {
+                let list = backSpells.map(x => prefix[0] + x);
+                if (props.depth === 2) {
+                    list = list.filter(x => !/[aeiouöü]{3,}/g.test(x));
+                }
+                spells.push(...list);
             }
         }
 
         batch(() => {
-            props.update("chars", geneList[0].join(" ") + ", " + geneList[1].join(" "));
-            props.update("validSpells", list);
-        })
+            props.update("chars", geneList[0].map(x => x === "" ? "_" : x).join(" ") + ", " + geneList[1].map(x => x === "" ? "_" : x).join(" "));
+            props.update("validSpells", spells);
+        });
     };
 
     let geneSourceRef: HTMLInputElement | undefined;
@@ -248,16 +265,22 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
                         <div class="items-center flex-1">
                             <input type="text" class="w-full border-2 border-black border-solid" value={props.selectedGene} onchange={(e) => props.update("selectedGene", e.target.value)} />
                         </div>
+                        <select class="items-center px-1 border-2 border-black border-solid" value={props.depth} onchange={updateDepth}>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
                     </div>
                     <div class="flex gap-x-2 items-center">
                         <div class="gap-1 overflow-x-hidden text-nowrap" title={props.chars}>{props.chars}</div>
                     </div>
                     <hr />
-                    <For each={props.validSpells}>
-                        {(item) => (
-                                <div class="gap-1 overflow-x-hidden text-nowrap" title={item}>{item}</div>
-                            )}
-                    </For>
+                    <div class="flex flex-col gap-y-1 overflow-y-scroll">
+                        <For each={props.validSpells}>
+                            {(item) => (
+                                    <div class="gap-1 text-nowrap" title={item}>{item}</div>
+                                )}
+                        </For>
+                    </div>
                 </div>
             </div>
         </div>
@@ -657,22 +680,92 @@ function createValidSpell(table: Set<string>, prefix: string, index: number, cha
         return null;
     }
 
-    const list: string[] = [];
+    const spells: string[] = [];
     const targetChars = charList[index][0] === charList[index][1] ? [charList[index][0]] : charList[index];
+    const vowels = {
+        "a": true,
+        "e": true,
+        "ö": true,
+    };
+    for (const c of Array.from(prefix)) {
+        switch(c) {
+            case "a":
+                vowels["ö"] = false;
+                break;
+            case "o":
+            case "u":
+                vowels["e"] = false;
+                vowels["ö"] = false;
+                break;
+            case "ö":
+            case "ü":
+                vowels["a"] = false;
+                break;
+        }
+    }
+
     for(const char of targetChars) {
         const str = char === "" ? prefix : prefix.substring(1) + char;
         if (table.has(str)) {
-            const result = createValidSpell(table, str, index + 1, charList);
-            if (result == null) {
-                list.push(char);
+            const backSpells = createValidSpell(table, str, index + 1, charList);
+
+            if (backSpells == null) {
+                spells.push(char);
             }
-            else if (result.length > 0) {
-                list.push(...result.map(x => char + x));
+            else if (backSpells.length > 0) {
+                for (const backSpell of backSpells) {
+                    const nextVowels = structuredClone(vowels);
+                    for (const c of Array.from(backSpell)) {
+                        switch(c) {
+                            case "a":
+                                nextVowels["ö"] &&= false;
+                                break;
+                            case "o":
+                            case "u":
+                                nextVowels["e"] &&= false;
+                                nextVowels["ö"] &&= false;
+                                break;
+                            case "ö":
+                            case "ü":
+                                nextVowels["a"] &&= false;
+                                break;
+                        }
+                    }
+
+                    if (nextVowels["a"] || nextVowels["e"] || nextVowels["ö"]) {
+                        spells.push(char + backSpell);
+                    }
+                }
             }
         }
     }
 
-    return list;
+    return spells;
+}
+
+function createValidSet(words: string[], depth: number, geneSource: GeneSource): Set<string> {
+    const table = new Set<string>();
+    let deconstructedWords: string[];
+    const replaceList = geneSource.replaceList;
+
+    if (replaceList != null) {
+        const replaceRegexp = new RegExp(`[${replaceList.map(x => x.source).join("")}]`, "gi");
+        deconstructedWords = words.map(x => x.replaceAll(replaceRegexp, x => replaceList.find(y => y.source === x)?.dest ?? x))
+    }
+    else {
+        deconstructedWords = words;
+    }
+
+    for (const input of deconstructedWords) {
+        for (let i = 0; i <= input.length - depth + 1; i++) {
+            const value = input.slice(i, i + depth);
+            if (!table.has(value)) {
+                table.add(value);
+            }
+        }
+    }
+
+    return table;
 }
 
 function doCointoss(): boolean {
@@ -694,32 +787,6 @@ function getRandomIndex(length: number): number {
 
 function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(value, max));
-}
-
-function createValidSet(words: string[], geneSource: GeneSource): Set<string> {
-    const DEPTH = 3;
-    const table = new Set<string>();
-    let deconstructedWords: string[];
-    const replaceList = geneSource.replaceList;
-
-    if (replaceList != null) {
-        const replaceRegexp = new RegExp(`[${replaceList.map(x => x.source).join("")}]`, "gi");
-        deconstructedWords = words.map(x => x.replaceAll(replaceRegexp, x => replaceList.find(y => y.source === x)?.dest ?? x))
-    }
-    else {
-        deconstructedWords = words;
-    }
-
-    for (const input of deconstructedWords) {
-        for (let i = 0; i <= input.length - DEPTH + 1; i++) {
-            const value = input.slice(i, i + DEPTH);
-            if (!table.has(value)) {
-                table.add(value);
-            }
-        }
-    }
-
-    return table;
 }
 
 export default WordGene;
