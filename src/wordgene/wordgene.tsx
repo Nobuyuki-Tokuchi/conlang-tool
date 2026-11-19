@@ -47,6 +47,11 @@ export type Props = {
     words: Dictionary["words"];
     output: CreatedGene[];
 
+    transitionTable: Set<string> | null;
+    selectedGene: string;
+    chars: string;
+    validSpells: string[];
+
     geneFileName: string;
     dictionaryName: string;
 };
@@ -64,6 +69,11 @@ export function createData(): Data<Props> & Methods<Props> {
         words: createSignal<Dictionary["words"]>([]),
         output: createSignal<CreatedGene[]>([]),
 
+        transitionTable: createSignal<Set<string> | null>(null),
+        selectedGene: createSignal<string>(""),
+        chars: createSignal<string>(""),
+        validSpells: createSignal<string[]>([]),
+
         geneFileName: createSignal<string>(""),
         dictionaryName: createSignal<string>(""),
 
@@ -77,6 +87,11 @@ export function createData(): Data<Props> & Methods<Props> {
                 geneSource: this.geneSource[0](),
                 words: this.words[0](),
                 output: this.output[0](),
+
+                transitionTable: this.transitionTable[0](),
+                selectedGene: this.selectedGene[0](),
+                chars: this.chars[0](),
+                validSpells: this.validSpells[0](),
 
                 geneFileName: this.geneFileName[0](),
                 dictionaryName: this.dictionaryName[0](),
@@ -128,6 +143,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
         batch(() => {
             props.update("words", words);
             props.update("dictionaryName", files[0].name);
+            props.update("transitionTable", createValidSet(words.map(x => x.entry.form), props.geneSource));
         });
     };
 
@@ -142,6 +158,43 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
             const output = [...props.output, createGene(props)];
             props.update("output", output);
         }
+    };
+
+    const showValidSpell: JSX.EventHandlerUnion<HTMLButtonElement, Event> = () => {
+        if (props.transitionTable == null) {
+            return;
+        }
+
+        console.debug(props.transitionTable);
+        const geneList: string[][] = splitTrim(props.selectedGene, ",").map(x => x.split(" ").filter(y => y !== "").map(y => props.geneSource.gene.find(z => z.gene === y)!.character));
+        const charList: [string, string][] = [];
+        for (let i = 0; i < geneList[0].length; i++) {
+            charList.push([geneList[0][i], geneList[1][i]]);
+        }
+        
+        const prefixList: string[] = [];
+        for (let i = 0; i < (1 << 3); i++) {
+            const prefix = charList[0][(i >> 2) & 1] + charList[1][(i >> 1) & 1] + charList[2][i & 1];
+            if (props.transitionTable.has(prefix) && !prefixList.some(x => x === prefix)) {
+                prefixList.push(prefix);
+            }
+        }
+
+        const list: string[] = [];
+        for (const prefix of prefixList) {
+            const result = createValidSpell(props.transitionTable, prefix, 3, charList);
+            if (result == null) {
+                list.push(prefix);
+            }
+            else if (result.length > 0) {
+                list.push(...result.map(x => prefix + x));
+            }
+        }
+
+        batch(() => {
+            props.update("chars", geneList[0].join(" ") + ", " + geneList[1].join(" "));
+            props.update("validSpells", list);
+        })
     };
 
     let geneSourceRef: HTMLInputElement | undefined;
@@ -175,7 +228,7 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
                 </div>
             </div>
             <div class="flex h-full overflow-hidden">
-                <div class="resize-none flex-1 gap-1 overflow-y-scroll border-2 border-black border-solid">
+                <div class="flex-1 gap-1 overflow-y-scroll border-2 border-black border-solid">
                     <For each={props.output}>
                         {(item) => (
                             <div class="flex gap-x-2 text-nowwrap">
@@ -184,6 +237,26 @@ function WordGene(props: Props & Pick<Methods<Props>, "update">) {
                                 <div class="mutation flex-1 text-nowrap">{item.message ?? ""}</div>
                             </div>
                         )}
+                    </For>
+                </div>
+                <div class="p-1 flex flex-col flex-1 gap-1 overflow-y-scroll border-2 border-black border-solid">
+                    <div class="flex gap-x-2 items-center">
+                        <div class="items-center">遺伝子確認</div>
+                        <div class="items-center">
+                            <InternalButton text="出力" onclick={showValidSpell} />
+                        </div>
+                        <div class="items-center flex-1">
+                            <input type="text" class="w-full border-2 border-black border-solid" value={props.selectedGene} onchange={(e) => props.update("selectedGene", e.target.value)} />
+                        </div>
+                    </div>
+                    <div class="flex gap-x-2 items-center">
+                        <div class="gap-1 overflow-x-hidden text-nowrap" title={props.chars}>{props.chars}</div>
+                    </div>
+                    <hr />
+                    <For each={props.validSpells}>
+                        {(item) => (
+                                <div class="gap-1 overflow-x-hidden text-nowrap" title={item}>{item}</div>
+                            )}
                     </For>
                 </div>
             </div>
@@ -196,6 +269,7 @@ function InternalButton(props: { text: string, onclick: JSX.ButtonHTMLAttributes
         <button class="text-nowrap flex-none p-1 border-solid border-2 border-black bg-white text-black hover:bg-gray-500 hover:text-white" onclick={props.onclick}>{props.text}</button>
     );
 }
+
 function hybridizeGene(props: Props, inputList: string[]): CreatedGene {
     const genes = inputList.map(x => getWordGene(props.words, props.geneSource, x)).filter(x => x !== null);
 
@@ -438,15 +512,6 @@ function createGene(props: Props): CreatedGene {
             }),
         ];
 
-        for (let i = 0; i < geneValues.length; i++) {
-            const gene = geneValues[i];
-            if (!doCointoss()) {
-                const tmp = gene[0];
-                gene[0] = gene[1];
-                gene[1] = tmp;
-            }
-        }
-
         const geneValue = geneValues.map(x => x.join(" "));
         return {
             word: props.input,
@@ -587,6 +652,29 @@ function mutatedGene(gene: string[], geneSource: GeneSource): [string[], string[
     return newValue;
 }
 
+function createValidSpell(table: Set<string>, prefix: string, index: number, charList: [string, string][]): string[] | null {
+    if (index >= charList.length) {
+        return null;
+    }
+
+    const list: string[] = [];
+    const targetChars = charList[index][0] === charList[index][1] ? [charList[index][0]] : charList[index];
+    for(const char of targetChars) {
+        const str = char === "" ? prefix : prefix.substring(1) + char;
+        if (table.has(str)) {
+            const result = createValidSpell(table, str, index + 1, charList);
+            if (result == null) {
+                list.push(char);
+            }
+            else if (result.length > 0) {
+                list.push(...result.map(x => char + x));
+            }
+        }
+    }
+
+    return list;
+}
+
 function doCointoss(): boolean {
     return isSuccess(0.5);
 }
@@ -606,6 +694,32 @@ function getRandomIndex(length: number): number {
 
 function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(value, max));
+}
+
+function createValidSet(words: string[], geneSource: GeneSource): Set<string> {
+    const DEPTH = 3;
+    const table = new Set<string>();
+    let deconstructedWords: string[];
+    const replaceList = geneSource.replaceList;
+
+    if (replaceList != null) {
+        const replaceRegexp = new RegExp(`[${replaceList.map(x => x.source).join("")}]`, "gi");
+        deconstructedWords = words.map(x => x.replaceAll(replaceRegexp, x => replaceList.find(y => y.source === x)?.dest ?? x))
+    }
+    else {
+        deconstructedWords = words;
+    }
+
+    for (const input of deconstructedWords) {
+        for (let i = 0; i <= input.length - DEPTH + 1; i++) {
+            const value = input.slice(i, i + DEPTH);
+            if (!table.has(value)) {
+                table.add(value);
+            }
+        }
+    }
+
+    return table;
 }
 
 export default WordGene;
